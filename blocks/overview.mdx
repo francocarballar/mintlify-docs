@@ -1,0 +1,71 @@
+---
+title: "Linda UI Blocks: Composable UI Sections Overview"
+sidebarTitle: "Overview"
+description: "High-level, pre-wired UI sections built on @lindaui/ui primitives—auth forms, lists, charts, dialogs, and more."
+---
+
+Blocks are composable UI sections that sit one layer above the primitive components in `@lindaui/ui`. While primitives give you buttons, inputs, and cards, blocks wire those primitives into fully-formed, production-ready patterns—login flows, filterable lists, chart dashboards, and document viewers—with controlled APIs that leave all state and data-fetching in your application.
+
+## Installation
+
+Install the blocks package alongside its required peer packages:
+
+```tsx
+pnpm add @lindaui/blocks @lindaui/ui @lindaui/tokens
+```
+
+Then import the design-token CSS once at your application root:
+
+```tsx
+import "@lindaui/tokens/css";
+```
+
+<Note>
+  You must also provide the following peer dependencies in your project:
+  `lucide-react`, `react-hook-form >=7`, and `recharts >=3` (recharts is only
+  required when using chart blocks). React 19 or later is required.
+</Note>
+
+## Import convention
+
+Every block ships as its own flat entry point. Import only what you use:
+
+```tsx
+import { LoginForm }        from "@lindaui/blocks/login-form";
+import { ListPane }         from "@lindaui/blocks/list-pane";
+import { AreaChart }        from "@lindaui/blocks/area-chart";
+import { DocumentPanel }    from "@lindaui/blocks/document-panel";
+```
+
+There is no barrel export—`@lindaui/blocks` itself is not a valid import path. This keeps your bundle lean and tree-shaking precise.
+
+## Available blocks
+
+<CardGroup cols={2}>
+  <Card title="Auth" icon="lock" href="/blocks/auth">
+    Login form, split-screen auth layout, auth context provider, and
+    repeatable field-array form.
+  </Card>
+  <Card title="Lists" icon="list" href="/blocks/lists">
+    Filterable list pane, selectable list item, table pane, master-detail
+    panel, split workspace, confirm dialog, image viewer, and recording
+    overlay.
+  </Card>
+  <Card title="Charts" icon="chart-bar" href="/blocks/charts">
+    Area, bar, line, pie, radar, and radial charts plus stat card, chart
+    card, and responsive stats grid for dashboards.
+  </Card>
+  <Card title="Documents" icon="file-text" href="/blocks/documents">
+    Document panel with controlled loading/empty/ready states and a
+    sectioned text reader.
+  </Card>
+</CardGroup>
+
+## Design principles
+
+All blocks share a few common rules:
+
+- **Controlled** — blocks own no data. You pass state and handlers; the block renders.
+- **Mobile-first** — layouts collapse gracefully. No desktop-only assumptions.
+- **Zero data-fetching** — no fetch calls, no `next/*` imports, no side-effect libraries.
+- **Flat own API** — block props never leak HeroUI or React Aria types. If you swap the underlying primitive, your consumer code stays intact.

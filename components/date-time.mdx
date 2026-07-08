@@ -1,0 +1,318 @@
+---
+title: "Date Pickers, Calendars, and Time Inputs"
+sidebarTitle: "Date & Time"
+description: "Accessible date and time components built on HeroUI v3 and @internationalized/date for locale-aware, type-safe date handling."
+---
+
+Linda UI's date and time components are compound re-exports of HeroUI v3 (React Aria Components). They handle calendar systems, locale formatting, and keyboard navigation out of the box. All value props accept objects from `@internationalized/date` rather than native `Date` objects, giving you precise, timezone-aware, calendar-system-agnostic date handling.
+
+<Note>
+  You must install `@internationalized/date` alongside Linda UI to use any of these components:
+
+  ```bash
+  pnpm add @internationalized/date
+  ```
+
+  Import helpers like `parseDate`, `parseAbsoluteToLocal`, and `CalendarDate` from this package when passing controlled values.
+</Note>
+
+---
+
+## DateInput
+
+`DateInput` (aliased from HeroUI's `DateField`) renders a segmented date field — day, month, and year each live in their own interactive segment. It is ideal when you want compact inline date entry without a calendar popover.
+
+```tsx
+import { DateInput } from "@lindaui/ui/date-input";
+```
+
+### Uncontrolled
+
+```tsx
+import { DateInput } from "@lindaui/ui/date-input";
+
+<DateInput label="Date of birth" />
+```
+
+### Controlled
+
+```tsx
+"use client";
+import { useState } from "react";
+import { DateInput } from "@lindaui/ui/date-input";
+import { parseDate, type CalendarDate } from "@internationalized/date";
+
+export function BirthDateField() {
+  const [date, setDate] = useState<CalendarDate | null>(
+    parseDate("1990-06-15")
+  );
+
+  return (
+    <DateInput
+      label="Date of birth"
+      value={date}
+      onChange={setDate}
+    />
+  );
+}
+```
+
+<Note>
+  `DateInput` is a compound component (`DateField` in HeroUI). For advanced composition (custom segments, description slots) refer to the HeroUI v3 `DateField` docs.
+</Note>
+
+---
+
+## DatePicker
+
+`DatePicker` combines a segmented `DateInput` with a calendar popover. Users can type directly into the segments or open the calendar to pick a date visually.
+
+```tsx
+import { DatePicker } from "@lindaui/ui/date-picker";
+```
+
+### Basic usage
+
+```tsx
+import { DatePicker } from "@lindaui/ui/date-picker";
+
+<DatePicker label="Start date" />
+```
+
+### Controlled
+
+```tsx
+"use client";
+import { useState } from "react";
+import { DatePicker } from "@lindaui/ui/date-picker";
+import { parseDate, type CalendarDate } from "@internationalized/date";
+
+export function StartDatePicker() {
+  const [date, setDate] = useState<CalendarDate | null>(
+    parseDate("2024-01-01")
+  );
+
+  return (
+    <DatePicker
+      label="Start date"
+      value={date}
+      onChange={setDate}
+    />
+  );
+}
+```
+
+### With min and max constraints
+
+```tsx
+import { DatePicker } from "@lindaui/ui/date-picker";
+import { parseDate } from "@internationalized/date";
+
+<DatePicker
+  label="Appointment date"
+  minValue={parseDate("2024-01-01")}
+  maxValue={parseDate("2024-12-31")}
+/>
+```
+
+---
+
+## DateRangePicker
+
+`DateRangePicker` lets users select a start and end date as a contiguous range. It opens a calendar that allows selecting two dates, and both segments can also be typed into directly.
+
+```tsx
+import { DateRangePicker } from "@lindaui/ui/date-range-picker";
+```
+
+### Basic usage
+
+```tsx
+import { DateRangePicker } from "@lindaui/ui/date-range-picker";
+
+<DateRangePicker label="Booking period" />
+```
+
+### Controlled
+
+The `value` prop expects a `RangeValue<CalendarDate>` object — an object with `start` and `end` keys.
+
+```tsx
+"use client";
+import { useState } from "react";
+import { DateRangePicker } from "@lindaui/ui/date-range-picker";
+import { parseDate, type CalendarDate } from "@internationalized/date";
+import type { RangeValue } from "@react-types/shared";
+
+export function BookingRangePicker() {
+  const [range, setRange] = useState<RangeValue<CalendarDate>>({
+    start: parseDate("2024-06-01"),
+    end: parseDate("2024-06-07"),
+  });
+
+  return (
+    <DateRangePicker
+      label="Booking period"
+      value={range}
+      onChange={setRange}
+    />
+  );
+}
+```
+
+<Tip>
+  You can read `range.start` and `range.end` from the `onChange` callback to compute durations or validate business rules (e.g. maximum stay length).
+</Tip>
+
+---
+
+## TimeInput
+
+`TimeInput` (aliased from HeroUI's `TimeField`) renders a segmented time field with hour, minute, and optionally second and period (AM/PM) segments. It accepts `Time` or `ZonedDateTime` values from `@internationalized/date`.
+
+```tsx
+import { TimeInput } from "@lindaui/ui/time-input";
+```
+
+### Basic usage
+
+```tsx
+import { TimeInput } from "@lindaui/ui/time-input";
+
+<TimeInput label="Meeting time" />
+```
+
+### Controlled
+
+```tsx
+"use client";
+import { useState } from "react";
+import { TimeInput } from "@lindaui/ui/time-input";
+import { Time } from "@internationalized/date";
+
+export function MeetingTimePicker() {
+  const [time, setTime] = useState(new Time(9, 30)); // 09:30
+
+  return (
+    <TimeInput
+      label="Meeting time"
+      value={time}
+      onChange={setTime}
+    />
+  );
+}
+```
+
+### 24-hour clock
+
+```tsx
+import { TimeInput } from "@lindaui/ui/time-input";
+
+<TimeInput label="Departure time" hourCycle={24} />
+```
+
+---
+
+## Calendar
+
+`Calendar` renders an interactive monthly calendar grid where users can select a single date. It supports keyboard navigation, min/max constraints, and unavailable date ranges.
+
+```tsx
+import { Calendar } from "@lindaui/ui/calendar";
+```
+
+### Basic usage
+
+```tsx
+import { Calendar } from "@lindaui/ui/calendar";
+
+<Calendar aria-label="Select a date" />
+```
+
+### Controlled
+
+```tsx
+"use client";
+import { useState } from "react";
+import { Calendar } from "@lindaui/ui/calendar";
+import { parseDate, type CalendarDate } from "@internationalized/date";
+
+export function BookingCalendar() {
+  const [date, setDate] = useState<CalendarDate>(
+    parseDate("2024-06-15")
+  );
+
+  return (
+    <Calendar
+      aria-label="Booking date"
+      value={date}
+      onChange={setDate}
+    />
+  );
+}
+```
+
+### With unavailable dates
+
+```tsx
+import { Calendar } from "@lindaui/ui/calendar";
+import { parseDate, isWeekend, getLocalTimeZone } from "@internationalized/date";
+
+<Calendar
+  aria-label="Appointment date"
+  isDateUnavailable={(date) =>
+    isWeekend(date, getLocalTimeZone())
+  }
+/>
+```
+
+<Note>
+  `Calendar` is a compound component. For full composition (custom header, week numbers, multiple visible months) refer to the HeroUI v3 `Calendar` documentation.
+</Note>
+
+---
+
+## RangeCalendar
+
+`RangeCalendar` extends the calendar grid to let users click-and-drag or keyboard-navigate to select a start and end date range, with the entire span highlighted.
+
+```tsx
+import { RangeCalendar } from "@lindaui/ui/range-calendar";
+```
+
+### Basic usage
+
+```tsx
+import { RangeCalendar } from "@lindaui/ui/range-calendar";
+
+<RangeCalendar aria-label="Select date range" />
+```
+
+### Controlled
+
+```tsx
+"use client";
+import { useState } from "react";
+import { RangeCalendar } from "@lindaui/ui/range-calendar";
+import { parseDate, type CalendarDate } from "@internationalized/date";
+import type { RangeValue } from "@react-types/shared";
+
+export function HolidayRangeCalendar() {
+  const [range, setRange] = useState<RangeValue<CalendarDate>>({
+    start: parseDate("2024-08-05"),
+    end: parseDate("2024-08-12"),
+  });
+
+  return (
+    <RangeCalendar
+      aria-label="Holiday dates"
+      value={range}
+      onChange={setRange}
+    />
+  );
+}
+```
+
+<Tip>
+  Prefer `DateRangePicker` when screen space is limited — it collapses the calendar into a popover triggered by a field. Use `RangeCalendar` when you want the calendar always visible (e.g. a dedicated booking page).
+</Tip>

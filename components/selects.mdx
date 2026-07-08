@@ -1,0 +1,288 @@
+---
+title: "Select and Combobox Components"
+sidebarTitle: "Selects"
+description: "Use Linda UI's Select and Combobox components to build accessible dropdowns and typeahead pickers with a simple flat items array and onChange API."
+---
+
+Linda UI's `Select` and `Combobox` components give you accessible dropdown and typeahead pickers behind a clean, flat API. Both accept a plain `items` array and fire `onChange` with a string value — the underlying React Aria composition (selected keys, popovers, list boxes) is fully encapsulated and never leaks into your code.
+
+<Warning>
+  There is **no `SelectItem` component** in Linda UI. Do not try to import or render `<SelectItem>`. Pass your options as a flat `items={[{ value, label }]}` array directly on `<Select>` or `<Combobox>`.
+</Warning>
+
+---
+
+## Select
+
+`Select` is a controlled or uncontrolled dropdown that renders a trigger button, a popover, and a listbox of options.
+
+```tsx
+import { Select } from "@lindaui/ui/select";
+```
+
+### Uncontrolled
+
+When you don't need to track the selected value in state, omit `value` and use `defaultValue` for a pre-selected option. React Aria manages the internal selection.
+
+```tsx
+<Select
+  label="Country"
+  placeholder="Pick a country"
+  defaultValue="us"
+  items={[
+    { value: "us", label: "United States" },
+    { value: "ca", label: "Canada" },
+    { value: "mx", label: "Mexico" },
+  ]}
+  onChange={(value) => console.log("selected:", value)}
+/>
+```
+
+### Controlled
+
+Pass `value` alongside `onChange` for full control over the selection. Only pass `value` when you intend to control the component — omitting it keeps the component uncontrolled and avoids the React controlled/uncontrolled warning.
+
+```tsx
+import { useState } from "react";
+import { Select } from "@lindaui/ui/select";
+
+const ROLES = [
+  { value: "admin", label: "Administrator" },
+  { value: "editor", label: "Editor" },
+  { value: "viewer", label: "Viewer" },
+];
+
+export function RolePicker() {
+  const [role, setRole] = useState("viewer");
+
+  return (
+    <Select
+      label="Role"
+      items={ROLES}
+      value={role}
+      onChange={setRole}
+    />
+  );
+}
+```
+
+### Validation and disabled state
+
+```tsx
+<Select
+  label="Priority"
+  items={[
+    { value: "low", label: "Low" },
+    { value: "medium", label: "Medium" },
+    { value: "high", label: "High" },
+  ]}
+  value={priority}
+  onChange={setPriority}
+  isInvalid={!priority}
+  isDisabled={isLocked}
+/>
+```
+
+### Accessibility — label vs. aria-label
+
+Every `Select` must have an accessible name. You have two options:
+
+- Provide a visible `label` prop (recommended for most forms).
+- Pass `aria-label` when a visible label would be redundant — for example, an inline filter inside a data table header.
+
+<Warning>
+  `placeholder` does **not** count as an accessible name in React Aria. If you render a `Select` without a `label`, you must supply `aria-label` (or `aria-labelledby`) or the control will be flagged as unnamed by accessibility tooling.
+</Warning>
+
+```tsx
+{/* ✅ Labelled via aria-label — no visible label needed */}
+<Select
+  aria-label="Filter by status"
+  placeholder="All statuses"
+  items={statusOptions}
+  onChange={setStatus}
+/>
+
+{/* ❌ placeholder alone is not an accessible name */}
+<Select
+  placeholder="Filter by status"
+  items={statusOptions}
+  onChange={setStatus}
+/>
+```
+
+### Props
+
+<ParamField path="items" type="{ value: string; label: string }[]" required>
+  The flat array of options to display. Each item must have a `value` (used as the key and emitted by `onChange`) and a `label` (displayed in the list).
+</ParamField>
+
+<ParamField path="value" type="string">
+  The currently selected value in controlled mode. Only pass this when you want to control the selection yourself. Omit for uncontrolled usage.
+</ParamField>
+
+<ParamField path="defaultValue" type="string">
+  The initially selected value in uncontrolled mode. Ignored when `value` is provided.
+</ParamField>
+
+<ParamField path="onChange" type="(value: string) => void">
+  Called with the `value` string of the newly selected item whenever the selection changes.
+</ParamField>
+
+<ParamField path="label" type="ReactNode">
+  A visible label rendered above the trigger. Omit only when you provide `aria-label`.
+</ParamField>
+
+<ParamField path="placeholder" type="string">
+  Text shown inside the trigger when nothing is selected. Does not serve as an accessible name.
+</ParamField>
+
+<ParamField path="isDisabled" type="boolean" default="false">
+  Prevents the dropdown from opening and dims the trigger.
+</ParamField>
+
+<ParamField path="isInvalid" type="boolean" default="false">
+  Applies error styles to the trigger and sets `aria-invalid`.
+</ParamField>
+
+<ParamField path="name" type="string">
+  The HTML `name` for form serialization.
+</ParamField>
+
+<ParamField path="aria-label" type="string">
+  An accessible name for situations where no visible `label` is rendered (compact toolbars, inline filters). Required when `label` is omitted.
+</ParamField>
+
+<ParamField path="aria-labelledby" type="string">
+  Points to the `id` of an existing element that labels this select. An alternative to `aria-label` when the label is rendered externally.
+</ParamField>
+
+---
+
+## Combobox
+
+`Combobox` extends `Select` with typeahead filtering — the user can type in the trigger to narrow the list of options. It shares the same flat `items` array and `onChange(value: string)` API as `Select`, with one additional callback for tracking the raw text input.
+
+```tsx
+import { Combobox } from "@lindaui/ui/combobox";
+```
+
+### Basic typeahead
+
+```tsx
+import { useState } from "react";
+import { Combobox } from "@lindaui/ui/combobox";
+
+const COUNTRIES = [
+  { value: "ar", label: "Argentina" },
+  { value: "br", label: "Brazil" },
+  { value: "cl", label: "Chile" },
+  { value: "co", label: "Colombia" },
+  { value: "mx", label: "Mexico" },
+  { value: "pe", label: "Peru" },
+];
+
+export function CountryCombobox() {
+  const [country, setCountry] = useState("");
+
+  return (
+    <Combobox
+      label="Country"
+      placeholder="Start typing…"
+      items={COUNTRIES}
+      value={country}
+      onChange={setCountry}
+    />
+  );
+}
+```
+
+### Server-side filtering with onInputChange
+
+When your items list is large, fetch filtered results from your API as the user types. Use `onInputChange` to drive the query and replace `items` with the server response.
+
+```tsx
+import { useState } from "react";
+import { Combobox } from "@lindaui/ui/combobox";
+
+export function UserSearch() {
+  const [selectedId, setSelectedId] = useState("");
+  const [results, setResults] = useState<{ value: string; label: string }[]>([]);
+
+  async function handleInputChange(query: string) {
+    if (query.length < 2) return setResults([]);
+    const data = await fetchUsers(query);
+    setResults(data.map((u) => ({ value: u.id, label: u.name })));
+  }
+
+  return (
+    <Combobox
+      label="Assign to"
+      placeholder="Search team members…"
+      items={results}
+      value={selectedId}
+      onChange={setSelectedId}
+      onInputChange={handleInputChange}
+    />
+  );
+}
+```
+
+<Tip>
+  For client-side filtering, use `matchesSearch` from `@lindaui/ui/search` to filter your items array before passing it to `Combobox`. It handles accent normalization and case insensitivity automatically: `items.filter(item => matchesSearch(item.label, inputValue))`.
+</Tip>
+
+### Accessibility
+
+The same `aria-label` / `aria-labelledby` rules that apply to `Select` apply here. A `Combobox` without a visible `label` must have an `aria-label`.
+
+```tsx
+<Combobox
+  aria-label="Search and select a product"
+  items={products}
+  onChange={setProductId}
+  onInputChange={setQuery}
+/>
+```
+
+### Props
+
+<ParamField path="items" type="{ value: string; label: string }[]" required>
+  The flat array of options. For server-side filtering, update this array in response to `onInputChange`.
+</ParamField>
+
+<ParamField path="value" type="string">
+  The currently selected `value` key in controlled mode. Omit for uncontrolled usage.
+</ParamField>
+
+<ParamField path="defaultValue" type="string">
+  The initially selected value in uncontrolled mode.
+</ParamField>
+
+<ParamField path="onChange" type="(value: string) => void">
+  Called with the `value` string of the selected item when the user picks an option from the list.
+</ParamField>
+
+<ParamField path="onInputChange" type="(value: string) => void">
+  Called with the raw text content of the input on every keystroke. Use this to drive server-side search queries or client-side filtering logic.
+</ParamField>
+
+<ParamField path="label" type="ReactNode">
+  A visible label rendered above the combo box.
+</ParamField>
+
+<ParamField path="placeholder" type="string">
+  Hint text shown in the text input when it is empty.
+</ParamField>
+
+<ParamField path="isDisabled" type="boolean" default="false">
+  Prevents input and dropdown interaction.
+</ParamField>
+
+<ParamField path="aria-label" type="string">
+  Accessible name for label-less usage (compact toolbars, inline filters). Required when `label` is omitted.
+</ParamField>
+
+<ParamField path="aria-labelledby" type="string">
+  Points to an external element's `id` that labels this combobox.
+</ParamField>

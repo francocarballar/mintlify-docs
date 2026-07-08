@@ -1,0 +1,190 @@
+---
+title: "@lindaui/ui: React Component Library Reference"
+sidebarTitle: "@lindaui/ui"
+description: "71 React 19 components wrapping HeroUI v3 (react-aria-components) behind stable per-component entry points with a flat, ergonomic API."
+---
+
+`@lindaui/ui` is the core React component layer of the Linda UI design system. It provides 71 components built on top of HeroUI v3 (react-aria-components), each exported from its own dedicated entry point. Where wrapping a HeroUI primitive would expose an awkward RAC composition API, Linda UI replaces it with a flat prop surface — no compound children, no leaked internal types. Components that are thin pass-throughs re-export the HeroUI compound parts directly.
+
+## Installation
+
+```bash
+pnpm add @lindaui/ui @lindaui/tokens
+```
+
+Then import the CSS bundle once at your app root:
+
+```tsx
+import "@lindaui/tokens/css";
+```
+
+## Peer dependencies
+
+Your project must provide the following:
+
+| Package | Version |
+|---|---|
+| `react` | `>=19` |
+| `react-dom` | `>=19` |
+| `react-hook-form` | `>=7` (required only for `@lindaui/ui/field`) |
+| `@lindaui/tokens` | `>=0.2.0` |
+
+---
+
+## Import convention
+
+Every component lives at its own subpath. There is **no barrel export** from the package root — always import from the specific entry point:
+
+```tsx
+import { Button }      from "@lindaui/ui/button";
+import { Input }       from "@lindaui/ui/input";
+import { Dialog }      from "@lindaui/ui/dialog";
+import { useDisclosure } from "@lindaui/ui/use-disclosure";
+```
+
+---
+
+## Global conventions
+
+Read these before building — they prevent the most common integration mistakes.
+
+<Warning>
+  **Controls emit `onChange`, not `onValueChange`.** `Checkbox`, `Radio`,
+  `Switch` give `onChange(isSelected: boolean)`; `Slider` gives
+  `onChange(value: number)`. There is no `onValueChange` anywhere in the
+  Linda UI wrapper API.
+</Warning>
+
+- **`Select` and `Combobox`** take `items={[{ value, label }]}` and emit `onChange(value: string)`. There is no `SelectItem` component — pass the flat array.
+- **`Dialog`** is always controlled: `open` + `onClose`. There is no `ModalContent`.
+- **`Menu`**: the `trigger` prop accepts the button *content* (label, icon, ReactNode) — not a `<button>` element. Passing a `<button>` nests buttons and breaks accessibility.
+- **`Button`** uses `variant`, not `color`. Allowed values: `primary | secondary | ghost | danger | link`.
+- **Field components (`Input`, `Textarea`, `NumberInput`, `SearchField`) do not accept `className`**. It is a TypeScript error on purpose — any class on the RAC wrapper never reaches the underlying `<input>`. Re-skin all fields at once by overriding the `--field-*` CSS custom properties: `--field-background`, `--field-foreground`, `--field-placeholder`, `--field-border`, `--field-border-hover`, `--field-border-focus`, `--field-focus`, `--field-radius`.
+- Interactive components are `"use client"` — they work as leaf client components inside RSC apps.
+
+---
+
+## Entry points
+
+### Forms & inputs
+
+| Entry point | Description |
+|---|---|
+| `@lindaui/ui/button` | Action button. `variant: primary \| secondary \| ghost \| danger \| link`. Uses `onPress` (RAC), `isDisabled`, `isPending`. |
+| `@lindaui/ui/input` | Single-line text field. Flat `label`, `placeholder`, `onChange(value: string)`, `isInvalid`, `isRequired`. No `className`. |
+| `@lindaui/ui/textarea` | Multiline text field. Same flat API as `input`. |
+| `@lindaui/ui/number-input` | Numeric field. `onChange(value: number)`, `minValue`, `maxValue`, `step`, `formatOptions`. |
+| `@lindaui/ui/search-field` | Text field with built-in magnifier icon and clear button. Emits the string only — do matching with `@lindaui/ui/search`. No `className`. |
+| `@lindaui/ui/input-group` | Layout wrapper for grouping an input with addons or action buttons. |
+| `@lindaui/ui/otp-input` | One-time password input. Re-exports the `input-otp` API. `maxLength`, `onChange(value: string)`. |
+| `@lindaui/ui/select` | Dropdown selector. `items: { value, label }[]`, `value?`, `defaultValue?`, `onChange(value: string)`. Pass `aria-label` when no visible label is shown. |
+| `@lindaui/ui/combobox` | Typeahead select. Adds `onInputChange(value: string)` to the select API. |
+| `@lindaui/ui/field` | React Hook Form adapter. Render-prop: `({ field, invalid }) => ReactNode`. Shows `hint` or the RHF error message. |
+
+### Controls
+
+| Entry point | Description |
+|---|---|
+| `@lindaui/ui/checkbox` | Single checkbox. `isSelected`, `onChange(isSelected: boolean)`. `children` is the label. |
+| `@lindaui/ui/checkbox-group` | Grouped checkboxes. `value: string[]`, `onChange(string[])`. |
+| `@lindaui/ui/radio` | Single radio button. `value` string, used inside `radio-group`. |
+| `@lindaui/ui/radio-group` | Radio button group. `value`, `onChange(value: string)`. |
+| `@lindaui/ui/switch` | Toggle switch. `isSelected`, `onChange(isSelected: boolean)`. `children` is the label. |
+| `@lindaui/ui/switch-group` | Layout-only grouping wrapper for switches. No `value`/`onChange` of its own. |
+| `@lindaui/ui/slider` | Range slider. `value`, `onChange(value: number)`, `minValue`, `maxValue`, `step`. `children` is the label. |
+| `@lindaui/ui/toggle-button` | Single pressable toggle. |
+| `@lindaui/ui/toggle-button-group` | Group of toggle buttons. `selectionMode: "single" \| "multiple"`, `onSelectionChange(Set<Key>)`. |
+| `@lindaui/ui/close-button` | Icon close/dismiss button. `onPress`. |
+
+### Overlays
+
+| Entry point | Description |
+|---|---|
+| `@lindaui/ui/dialog` | Controlled modal dialog. `open`, `onClose`, `title`, `footer`, `size`, `isDismissable`. Pair with `useDisclosure`. |
+| `@lindaui/ui/alert-dialog` | Confirm/cancel dialog. `open`, `onClose`, `onConfirm`, `title`, `description`, `confirmLabel`, `cancelLabel`, `isDestructive`. |
+| `@lindaui/ui/drawer` | Slide-in panel. HeroUI v3 compound re-export — compose the parts. |
+| `@lindaui/ui/popover` | Anchored floating panel. HeroUI v3 compound re-export. |
+| `@lindaui/ui/tooltip` | Hover tooltip. HeroUI v3 compound re-export. |
+| `@lindaui/ui/menu` | Dropdown menu. `trigger` is the button content (not a `<button>`). `items: { key, label, onAction, isDanger, isDisabled }[]`. |
+
+### Data display
+
+| Entry point | Description |
+|---|---|
+| `@lindaui/ui/table` | Declarative data table. `columns: { key, label }[]`, `rows: Record<string, ReactNode>[]`, `emptyContent`, `aria-label`. Renders a RAC `grid`. |
+| `@lindaui/ui/alert` | Inline alert. `title`, `description`, optional `children` for body content. |
+| `@lindaui/ui/avatar` | User avatar image/fallback. HeroUI wrapper — pass HeroUI props directly. Exposes only the root (no `Avatar.Image`/`Avatar.Fallback`). |
+| `@lindaui/ui/chip` | Small label chip. HeroUI wrapper. |
+| `@lindaui/ui/badge` | Bespoke status badge (not HeroUI). `variant: "default"` and other variants. Styled via `@lindaui/tokens`. |
+| `@lindaui/ui/status-chip` | Domain status chip. `status: "BORRADOR" \| "CONFIRMADO" \| "FIRMADO"`. |
+| `@lindaui/ui/tag` | HeroUI v3 tag compound re-export. |
+| `@lindaui/ui/tag-group` | HeroUI v3 tag group compound re-export. |
+| `@lindaui/ui/listbox` | HeroUI v3 listbox compound re-export. |
+| `@lindaui/ui/breadcrumbs` | HeroUI v3 breadcrumbs. Note: use `BreadcrumbsItem` (not `BreadcrumbItem`). |
+| `@lindaui/ui/link` | HeroUI v3 link re-export. |
+| `@lindaui/ui/pagination` | HeroUI v3 pagination re-export. |
+
+### Feedback & progress
+
+| Entry point | Description |
+|---|---|
+| `@lindaui/ui/toast` | HeroUI v3 queue toast API. Use `toast` / `toastQueue` and mount `<ToastProvider />`. Not `addToast`. |
+| `@lindaui/ui/spinner` | Loading spinner. HeroUI wrapper. |
+| `@lindaui/ui/progress` | Linear progress bar. Note: export is named `Progress` (maps to HeroUI `ProgressBar`). |
+| `@lindaui/ui/progress-circle` | Circular progress indicator. HeroUI compound re-export. |
+| `@lindaui/ui/meter` | Meter bar. HeroUI compound re-export. |
+| `@lindaui/ui/skeleton` | Skeleton loading placeholder. HeroUI wrapper. |
+
+### Disclosure & navigation
+
+| Entry point | Description |
+|---|---|
+| `@lindaui/ui/accordion` | Expandable accordion sections. HeroUI v3 compound re-export. |
+| `@lindaui/ui/tabs` | Tabbed navigation. HeroUI v3 compound re-export. |
+| `@lindaui/ui/disclosure` | Single collapsible section. HeroUI v3 compound re-export. |
+| `@lindaui/ui/disclosure-group` | Group of collapsible sections. HeroUI v3 compound re-export. |
+| `@lindaui/ui/card` | Content card container. HeroUI v3 compound re-export. |
+| `@lindaui/ui/surface` | Generic elevated surface container. HeroUI v3 compound re-export. |
+
+### Typography & primitives
+
+| Entry point | Description |
+|---|---|
+| `@lindaui/ui/text` | Typography primitives. Re-exports HeroUI `Typography` (also `Heading`, `Paragraph`, `Code`). `Text` = `Typography`. |
+| `@lindaui/ui/divider` | Horizontal/vertical separator. Re-exports HeroUI `Separator` as `Divider`. |
+| `@lindaui/ui/scroll-shadow` | Scroll container with fade shadows at edges. HeroUI re-export. |
+| `@lindaui/ui/kbd` | Keyboard key label. HeroUI re-export. |
+
+### Date, time & color
+
+These re-export HeroUI v3 compound components. They require `@internationalized/date` values for date/time inputs. Compose the exported parts and refer to the `.d.ts` or HeroUI v3 docs for prop details.
+
+| Entry point | Description |
+|---|---|
+| `@lindaui/ui/date-input` | Date text field (= HeroUI `DateField`). |
+| `@lindaui/ui/date-picker` | Date picker with calendar popover. |
+| `@lindaui/ui/date-range-picker` | Date range picker. |
+| `@lindaui/ui/time-input` | Time text field (= HeroUI `TimeField`). |
+| `@lindaui/ui/calendar` | Standalone month calendar. |
+| `@lindaui/ui/range-calendar` | Date range calendar. |
+| `@lindaui/ui/color-picker` | Full color picker overlay. |
+| `@lindaui/ui/color-area` | 2-D color saturation/lightness canvas. |
+| `@lindaui/ui/color-slider` | Single-axis color channel slider. |
+| `@lindaui/ui/color-field` | Hex/HSL/RGB text input. |
+| `@lindaui/ui/color-swatch` | Solid color preview swatch. |
+| `@lindaui/ui/color-swatch-picker` | Grid of selectable color swatches. |
+
+### Charts primitive
+
+| Entry point | Description |
+|---|---|
+| `@lindaui/ui/chart` | shadcn-style chart primitive over recharts. `<ChartContainer config={{ key: { label, color } }}>` injects `--color-<key>` CSS variables. Also exports `ChartTooltip`, `ChartTooltipContent`, `ChartLegend`, `ChartLegendContent`, `useChart`, and the `ChartConfig` type. Concrete chart blocks live in `@lindaui/blocks`. |
+
+### Utilities & hooks
+
+| Entry point | Description |
+|---|---|
+| `@lindaui/ui/search` | `normalizeText(s)` and `matchesSearch(haystack, query)` — accent/case-insensitive list filtering. |
+| `@lindaui/ui/cn` | `cn(...classes)` — Tailwind-aware class name merging and deduplication. |
+| `@lindaui/ui/use-disclosure` | `useDisclosure(defaultOpen?)` — boolean open/close state with stable callbacks. |
+| `@lindaui/ui/use-media-query` | `useMediaQuery(query)`, `useIsDesktop()`, `useIsMobile()` — SSR-safe viewport queries. |

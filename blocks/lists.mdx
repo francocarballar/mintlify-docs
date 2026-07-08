@@ -1,0 +1,607 @@
+---
+title: "List, Table, and Master-Detail Layout Blocks"
+sidebarTitle: "Lists"
+description: "Controlled list pane, table pane, selectable list items, master-detail panel, split workspace, dialogs, and media overlays."
+---
+
+The list and master-detail blocks give you a complete toolkit for building data-browsing
+interfaces. `ListPane` and `TablePane` provide filterable, searchable shells with
+loading, empty, and error states. `ListItem` is the selectable row that goes inside
+`ListPane`. `DetailPanel` and `SplitWorkspace` compose into full master-detail layouts,
+while `ConfirmDialog`, `ImageViewer`, and `RecordingOverlay` cover the interaction
+patterns that appear alongside them.
+
+<Tip>
+  None of these blocks filter or fetch data themselves. Pass already-filtered
+  children or `rows` to `ListPane` and `TablePane`. Use
+  `@lindaui/ui/search` for client-side search/filter logic before passing
+  data into the blocks.
+</Tip>
+
+---
+
+## ListPane
+
+`ListPane` is the scrollable, filterable shell for a list of items. It renders filter
+tabs and a search field at the top, handles loading skeletons, an error callout with a
+retry button, and an empty state illustration. Your already-filtered items go in as
+`children`.
+
+```tsx
+import { ListPane } from "@lindaui/blocks/list-pane";
+import { ListItem } from "@lindaui/blocks/list-item";
+
+<ListPane
+  filters={[
+    { key: "all",    label: "All",    count: 42 },
+    { key: "active", label: "Active", count: 18 },
+    { key: "closed", label: "Closed", count: 24 },
+  ]}
+  activeFilter={filter}
+  onFilterChange={setFilter}
+  searchValue={search}
+  onSearchChange={setSearch}
+  loading={isLoading}
+  error={errorMessage}
+  onRetry={refetch}
+  isEmpty={items.length === 0}
+  emptyTitle="No items found"
+  emptyDescription="Try adjusting your search or filter."
+>
+  {items.map((item) => (
+    <ListItem
+      key={item.id}
+      title={item.name}
+      subtitle={item.status}
+      onSelect={() => setSelected(item.id)}
+      selected={selected === item.id}
+    />
+  ))}
+</ListPane>
+```
+
+### Props
+
+<ParamField path="filters" type="{ key: string; label: string; count?: number }[]">
+  Filter tab definitions. Each tab is a button; the active tab is highlighted.
+  Optional `count` shows a small badge next to the label.
+</ParamField>
+
+<ParamField path="activeFilter" type="string">
+  The `key` of the currently active filter tab.
+</ParamField>
+
+<ParamField path="onFilterChange" type="(key: string) => void">
+  Called when a filter tab is pressed.
+</ParamField>
+
+<ParamField path="searchValue" type="string" default='""'>
+  Controlled value of the search field.
+</ParamField>
+
+<ParamField path="onSearchChange" type="(value: string) => void">
+  Called on every keystroke in the search field.
+</ParamField>
+
+<ParamField path="searchPlaceholder" type="string" default='"Buscar"'>
+  Placeholder text for the search field.
+</ParamField>
+
+<ParamField path="loading" type="boolean" default="false">
+  Shows skeleton rows while data is loading.
+</ParamField>
+
+<ParamField path="error" type="string | null" default="null">
+  Error message to display in the error callout.
+</ParamField>
+
+<ParamField path="onRetry" type="() => void">
+  Shows a retry button in the error state when provided.
+</ParamField>
+
+<ParamField path="isEmpty" type="boolean">
+  Forces the empty state. When omitted, the empty state is shown automatically
+  when `children` is empty and there is no loading or error.
+</ParamField>
+
+<ParamField path="emptyTitle" type="string" default='"Sin resultados"'>
+  Heading in the empty state.
+</ParamField>
+
+<ParamField path="emptyDescription" type="ReactNode">
+  Supplemental text below the empty state heading.
+</ParamField>
+
+<ParamField path="emptyIcon" type="ReactNode">
+  Custom icon for the empty state. Defaults to a file icon.
+</ParamField>
+
+<ParamField path="children" type="ReactNode">
+  Your pre-filtered list items.
+</ParamField>
+
+---
+
+## ListItem
+
+`ListItem` is a fully controlled, accessible button row designed to be placed inside
+`ListPane`. It highlights itself when `selected` and calls `onSelect` when pressed.
+
+```tsx
+import { ListItem } from "@lindaui/blocks/list-item";
+import { Avatar }   from "@lindaui/ui/avatar";
+
+<ListItem
+  title="Alice Johnson"
+  subtitle="alice@example.com"
+  meta="Last active 2h ago"
+  leading={<Avatar name="Alice Johnson" size="md" />}
+  badge={{ label: "Admin", variant: "info" }}
+  selected={selected === "alice"}
+  onSelect={() => setSelected("alice")}
+  showChevron
+/>
+```
+
+### Props
+
+<ParamField path="title" type="string" required>
+  Primary text of the row.
+</ParamField>
+
+<ParamField path="subtitle" type="ReactNode">
+  Secondary line below the title.
+</ParamField>
+
+<ParamField path="meta" type="ReactNode">
+  Tertiary line (e.g. a date or count). Rendered in tabular-nums.
+</ParamField>
+
+<ParamField path="leading" type="ReactNode">
+  Content to the left of the text block (e.g. an avatar or icon).
+</ParamField>
+
+<ParamField path="badge" type='{ label: string; variant?: "default" | "success" | "warning" | "danger" | "info" }'>
+  Status badge shown to the right of the text block.
+</ParamField>
+
+<ParamField path="selected" type="boolean" default="false">
+  Applies the selected highlight style and sets `aria-pressed`.
+</ParamField>
+
+<ParamField path="onSelect" type="() => void">
+  Called when the row is clicked.
+</ParamField>
+
+<ParamField path="showChevron" type="boolean" default="false">
+  Shows a right-pointing chevron on mobile only (hidden on desktop where the
+  two-column layout makes it redundant).
+</ParamField>
+
+---
+
+## TablePane
+
+`TablePane` is the tabular sibling of `ListPane`. It provides the same controlled chrome
+(filter tabs, search field, loading/error/empty states) wrapped around
+`@lindaui/ui/table`. Each cell value is a `ReactNode`, so you can embed chips, avatars,
+or badges directly in your data.
+
+```tsx
+import { TablePane } from "@lindaui/blocks/table-pane";
+import { Badge }     from "@lindaui/ui/badge";
+
+const columns = [
+  { key: "name",   label: "Name" },
+  { key: "email",  label: "Email" },
+  { key: "status", label: "Status" },
+];
+
+const rows = filteredUsers.map((u) => ({
+  name:   u.name,
+  email:  u.email,
+  status: <Badge variant={u.active ? "success" : "default"}>{u.active ? "Active" : "Inactive"}</Badge>,
+}));
+
+<TablePane
+  columns={columns}
+  rows={rows}
+  filters={[
+    { key: "all",    label: "All" },
+    { key: "active", label: "Active" },
+  ]}
+  activeFilter={filter}
+  onFilterChange={setFilter}
+  searchValue={search}
+  onSearchChange={setSearch}
+  loading={isLoading}
+  error={errorMessage}
+  onRetry={refetch}
+  footerCount={{ shown: rows.length, total: totalCount }}
+/>
+```
+
+### Additional props (beyond ListPane)
+
+<ParamField path="columns" type="{ key: string; label: string }[]" required>
+  Column definitions forwarded to `@lindaui/ui/table`.
+</ParamField>
+
+<ParamField path="rows" type="Record<string, ReactNode>[]" required>
+  Row data. Keys must match column `key` values. Each value is a `ReactNode`.
+</ParamField>
+
+<ParamField path="toolbarExtra" type="ReactNode">
+  Extra controls rendered to the right of the search field (e.g. a status
+  select or a date range picker).
+</ParamField>
+
+<ParamField path="footer" type="ReactNode">
+  Custom footer content. Takes precedence over `footerCount`.
+</ParamField>
+
+<ParamField path="footerCount" type="{ shown: number; total: number; label?: string }">
+  Renders a default "Showing X of Y" footer. `label` replaces "Showing".
+</ParamField>
+
+---
+
+## DetailPanel
+
+`DetailPanel` renders the right-hand side of a master-detail layout. When no item is
+selected it shows a placeholder empty state. When `selected` is `true` and `title` is
+provided, it renders a header with optional badges, subtitle, a two-column media +
+metadata card layout, and a primary CTA button.
+
+```tsx
+import { DetailPanel } from "@lindaui/blocks/detail-panel";
+import { Mail }        from "lucide-react";
+import { Badge }       from "@lindaui/ui/badge";
+
+<DetailPanel
+  selected={!!activeUser}
+  title={activeUser?.name}
+  subtitle={activeUser?.email}
+  badges={<Badge variant="success">Active</Badge>}
+  meta={[
+    { icon: <Mail size={14} />, label: "Email",  value: activeUser?.email },
+    { label: "Role",    value: activeUser?.role },
+    { label: "Joined",  value: activeUser?.joinDate },
+  ]}
+  action={{
+    label: "Send message",
+    icon: <Mail size={16} />,
+    onPress: () => openMessageModal(activeUser?.id),
+  }}
+  emptyTitle="Select a user"
+  emptyDescription="Pick someone from the list to view their details."
+/>
+```
+
+### Props
+
+<ParamField path="selected" type="boolean" default="false">
+  When `false` (or `title` is undefined), renders the empty state.
+</ParamField>
+
+<ParamField path="title" type="string">
+  Primary heading for the detail view.
+</ParamField>
+
+<ParamField path="subtitle" type="ReactNode">
+  Secondary line below the title.
+</ParamField>
+
+<ParamField path="badges" type="ReactNode">
+  Badge row rendered above the title.
+</ParamField>
+
+<ParamField path="media" type="ReactNode">
+  Optional media slot. When present, the layout becomes a two-column grid
+  (200 px fixed media column + flexible metadata column) on small screens and
+  above.
+</ParamField>
+
+<ParamField path="meta" type="{ icon?: ReactNode; label: ReactNode; value: ReactNode }[]">
+  Rows rendered in the metadata card. Each row shows label on the left and
+  value on the right, separated by dividers.
+</ParamField>
+
+<ParamField path="action" type="{ label: ReactNode; onPress: () => void; icon?: ReactNode }">
+  Primary CTA button rendered below the metadata card.
+</ParamField>
+
+<ParamField path="emptyTitle" type="string" default='"Seleccioná un elemento"'>
+  Heading of the empty state.
+</ParamField>
+
+<ParamField path="emptyDescription" type="ReactNode">
+  Supplemental text in the empty state.
+</ParamField>
+
+<ParamField path="emptyIcon" type="ReactNode">
+  Custom icon for the empty state.
+</ParamField>
+
+---
+
+## SplitWorkspace
+
+`SplitWorkspace` is a responsive two-panel layout with a media area and a side panel.
+On desktop it renders a two-column grid (media left, panel right). On mobile it stacks
+them vertically (media on top, rounded panel sheet below). It uses `useIsDesktop` from
+`@lindaui/ui/use-media-query` to switch layouts without CSS-only tricks.
+
+```tsx
+import { SplitWorkspace }   from "@lindaui/blocks/split-workspace";
+import { ImageViewer }       from "@lindaui/blocks/image-viewer";
+import { DetailPanel }       from "@lindaui/blocks/detail-panel";
+
+<SplitWorkspace
+  media={<ImageViewer src={document.imageUrl} showControls />}
+  panel={<DetailPanel selected={!!selected} title={selected?.title} meta={selected?.meta} />}
+  backHref="/documents"
+  backLabel="Back to documents"
+/>
+```
+
+### Props
+
+<ParamField path="media" type="ReactNode" required>
+  Content of the left/top media area (e.g. `ImageViewer`).
+</ParamField>
+
+<ParamField path="panel" type="ReactNode" required>
+  Content of the right/bottom panel area (e.g. `DetailPanel` or
+  `DocumentPanel`).
+</ParamField>
+
+<ParamField path="overlay" type="ReactNode">
+  Content rendered on top of both areas at `z-[60]` (e.g.
+  `RecordingOverlay`).
+</ParamField>
+
+<ParamField path="backHref" type="string">
+  When provided, renders a legible back pill over the media with a scrim for
+  contrast on any background.
+</ParamField>
+
+<ParamField path="backLabel" type="ReactNode" default='"Volver"'>
+  Label for the default back pill.
+</ParamField>
+
+<ParamField path="back" type="ReactNode">
+  Custom back control. Wins over `backHref`/`backLabel`. Use only when the
+  default pill does not suit your needs.
+</ParamField>
+
+---
+
+## ConfirmDialog
+
+`ConfirmDialog` is a fully controlled confirmation modal. Set `destructive` to `true`
+for irreversible actions—the confirm button turns red and the icon box uses a
+destructive tint. The optional `identity` prop renders an actor chip below the
+description.
+
+```tsx
+import { ConfirmDialog } from "@lindaui/blocks/confirm-dialog";
+import { Trash2 }        from "lucide-react";
+
+<ConfirmDialog
+  open={isOpen}
+  onOpenChange={setIsOpen}
+  onConfirm={handleDelete}
+  title="Delete project"
+  description="This will permanently delete the project and all its data. This action cannot be undone."
+  confirmLabel="Delete project"
+  cancelLabel="Keep it"
+  icon={<Trash2 size={18} />}
+  destructive
+  identity={{ name: "Alice Johnson" }}
+/>
+```
+
+### Props
+
+<ParamField path="open" type="boolean" required>
+  Controls dialog visibility.
+</ParamField>
+
+<ParamField path="onOpenChange" type="(open: boolean) => void" required>
+  Called when the user closes the dialog via the cancel button or backdrop.
+</ParamField>
+
+<ParamField path="onConfirm" type="() => void" required>
+  Called when the user presses the confirm button.
+</ParamField>
+
+<ParamField path="title" type="ReactNode" required>
+  Dialog title.
+</ParamField>
+
+<ParamField path="description" type="ReactNode">
+  Body copy below the icon.
+</ParamField>
+
+<ParamField path="confirmLabel" type="string" default='"Confirmar"'>
+  Label for the confirm button.
+</ParamField>
+
+<ParamField path="cancelLabel" type="string" default='"Cancelar"'>
+  Label for the cancel button.
+</ParamField>
+
+<ParamField path="icon" type="ReactNode">
+  Icon shown in a tinted box above the description.
+</ParamField>
+
+<ParamField path="destructive" type="boolean" default="false">
+  Turns the confirm button and icon box red. Use for irreversible actions.
+</ParamField>
+
+<ParamField path="identity" type="{ name: string }">
+  Renders an avatar chip with the actor's initials and name below the
+  description.
+</ParamField>
+
+---
+
+## ImageViewer
+
+`ImageViewer` renders a full-bleed image on a dark viewer surface (`viewer-*` design
+tokens). It manages zoom state internally and exposes optional zoom controls. You can
+layer annotations over the image and add a caption.
+
+```tsx
+import { ImageViewer } from "@lindaui/blocks/image-viewer";
+
+<ImageViewer
+  src="/documents/contract-page-1.png"
+  alt="Contract page 1"
+  showControls
+  caption="Page 1 of 4"
+  minZoom={0.5}
+  maxZoom={3}
+/>
+```
+
+### Props
+
+<ParamField path="src" type="string">
+  URL of the image to display. Shows a placeholder when omitted or if the
+  image fails to load.
+</ParamField>
+
+<ParamField path="alt" type="string" default='""'>
+  Accessible alt text for the image.
+</ParamField>
+
+<ParamField path="showControls" type="boolean" default="false">
+  Renders zoom-in, zoom-out, and reset buttons in the bottom-left corner.
+</ParamField>
+
+<ParamField path="annotations" type="ReactNode">
+  Content overlaid in the top-right corner of the viewer (e.g. badge or
+  toolbar).
+</ParamField>
+
+<ParamField path="caption" type="string">
+  Monospace caption text in the bottom-left corner.
+</ParamField>
+
+<ParamField path="placeholderLabel" type="string">
+  Text shown in the placeholder state when there is no image.
+</ParamField>
+
+<ParamField path="dim" type="number" default="0">
+  Opacity (0–1) of a tint overlay that dims the image (e.g. to draw
+  attention to an `overlay` child in `SplitWorkspace`).
+</ParamField>
+
+<ParamField path="minZoom" type="number" default="1">
+  Minimum zoom level for the controls.
+</ParamField>
+
+<ParamField path="maxZoom" type="number" default="2.6">
+  Maximum zoom level for the controls.
+</ParamField>
+
+---
+
+## RecordingOverlay
+
+`RecordingOverlay` is a voice-recording UI that shows a pulsing microphone, an elapsed
+timer, an animated waveform, and stop/cancel controls. It has two variants to suit
+different container surfaces.
+
+<CodeGroup>
+
+```tsx overlay variant
+import { RecordingOverlay } from "@lindaui/blocks/recording-overlay";
+
+// Place inside SplitWorkspace's `overlay` prop—covers the viewer surface
+<SplitWorkspace
+  media={<ImageViewer src={src} dim={0.6} />}
+  panel={panel}
+  overlay={
+    isRecording && (
+      <RecordingOverlay
+        variant="overlay"
+        label="Recording"
+        elapsed={seconds}
+        onStop={stopRecording}
+        onCancel={cancelRecording}
+        error={micError}
+      />
+    )
+  }
+/>
+```
+
+```tsx inline variant
+import { RecordingOverlay } from "@lindaui/blocks/recording-overlay";
+
+// Placed inline in a panel—inherits the panel surface and text tokens
+{isRecording && (
+  <RecordingOverlay
+    variant="inline"
+    label="Recording"
+    elapsed={seconds}
+    onStop={stopRecording}
+    onCancel={cancelRecording}
+  />
+)}
+```
+
+</CodeGroup>
+
+### Variants
+
+| Variant | Surface | Positioning | Use when |
+|---------|---------|-------------|----------|
+| `overlay` (default) | Dark `viewer-*` tokens, fixed background | `absolute inset-0 z-[60]` | Covering `ImageViewer` inside `SplitWorkspace` |
+| `inline` | Inherits panel surface, token-driven text | Fills container flow | Embedded in a side panel or sheet |
+
+### Props
+
+<ParamField path="label" type="string" required>
+  Recording status label (e.g. "Recording", "Live").
+</ParamField>
+
+<ParamField path="elapsed" type="number" required>
+  Elapsed time in seconds. Formatted as `MM:SS`.
+</ParamField>
+
+<ParamField path="onStop" type="() => void" required>
+  Called when the user presses the stop button.
+</ParamField>
+
+<ParamField path="onCancel" type="() => void" required>
+  Called when the user cancels (or dismisses the error state).
+</ParamField>
+
+<ParamField path="variant" type='"overlay" | "inline"' default='"overlay"'>
+  Surface and positioning variant. See table above.
+</ParamField>
+
+<ParamField path="description" type="string">
+  Optional instructional text rendered below the waveform.
+</ParamField>
+
+<ParamField path="error" type="string | null">
+  When set, switches to an error view with an alert icon, the error message,
+  and a back button. Use to surface microphone permission failures.
+</ParamField>
+
+<ParamField path="stopLabel" type="string" default='"Detener"'>
+  Accessible label for the stop button.
+</ParamField>
+
+<ParamField path="errorTitle" type="string" default='"No se pudo acceder al micrófono"'>
+  Heading shown in the error state.
+</ParamField>
+
+<ParamField path="backLabel" type="string" default='"Volver"'>
+  Label for the back/dismiss button in the error state.
+</ParamField>

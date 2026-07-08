@@ -1,0 +1,317 @@
+---
+title: "Tables, Badges, Alerts, and Display Components"
+sidebarTitle: "Data Display"
+description: "Read-only display components for structured data in Linda UI: Table, Alert, Badge, StatusChip, Avatar, Chip, Card, and Surface with token-driven styling."
+---
+
+Linda UI's data-display components present information without requiring user input. They range from structured tabular data (`Table`) and contextual feedback (`Alert`) to semantic labels (`Badge`, `StatusChip`) and layout containers (`Card`, `Surface`). Some components — `Badge` and `StatusChip` — are bespoke and use Linda UI's design tokens directly rather than wrapping HeroUI.
+
+## Table
+
+`<Table>` renders a fully accessible data grid from two plain arrays: a `columns` definition and a `rows` record. You do not need to write any `TableHeader`, `TableBody`, or `TableCell` code — the component composes the HeroUI v3 RAC grid internally and handles stable row IDs and row-header assignment for you.
+
+```tsx
+import { Table } from "@lindaui/ui/table";
+
+const columns = [
+  { key: "name",   label: "Name" },
+  { key: "role",   label: "Role" },
+  { key: "status", label: "Status" },
+];
+
+const rows = [
+  { name: "Alice Johnson", role: "Engineer",  status: "Active" },
+  { name: "Bob Smith",     role: "Designer",  status: "On leave" },
+  { name: "Carol White",   role: "PM",        status: "Active" },
+];
+
+function Example() {
+  return (
+    <Table
+      columns={columns}
+      rows={rows}
+      aria-label="Team members"
+      emptyContent="No team members found."
+    />
+  );
+}
+```
+
+Row cells can hold any `ReactNode`, so you can embed badges, avatars, or action menus directly in your data:
+
+```tsx
+import { Table } from "@lindaui/ui/table";
+import { Badge } from "@lindaui/ui/badge";
+
+const columns = [
+  { key: "name",   label: "Name" },
+  { key: "score",  label: "Score" },
+  { key: "result", label: "Result" },
+];
+
+const rows = [
+  {
+    name:   "Alice Johnson",
+    score:  "98 / 100",
+    result: <Badge variant="success">Pass</Badge>,
+  },
+  {
+    name:   "Bob Smith",
+    score:  "41 / 100",
+    result: <Badge variant="danger">Fail</Badge>,
+  },
+];
+
+function Example() {
+  return <Table columns={columns} rows={rows} aria-label="Assessment results" />;
+}
+```
+
+<Note>
+  The first column is automatically designated as the row header (`isRowHeader`) to satisfy ARIA grid requirements. Place your most descriptive column — typically a name or ID — first.
+</Note>
+
+<ParamField body="columns" type="{ key: string; label: string }[]" required>
+  Ordered array of column definitions. Each `key` is used to look up the matching cell value from each row object.
+</ParamField>
+
+<ParamField body="rows" type="Record<string, ReactNode>[]" required>
+  Array of row objects. Each object's keys correspond to the `key` values in `columns`; values can be any `ReactNode`.
+</ParamField>
+
+<ParamField body="aria-label" type="string" default='"Tabla"'>
+  Accessible label for the table. Always provide a meaningful value so screen readers can identify the grid.
+</ParamField>
+
+<ParamField body="emptyContent" type="ReactNode" default='"Sin datos"'>
+  Rendered inside the table body when `rows` is empty.
+</ParamField>
+
+---
+
+## Alert
+
+`<Alert>` displays a contextual message with an optional `title` and `description`. You can also pass `children` for custom body content below the description. It wraps HeroUI v3's `AlertContent`, `AlertTitle`, and `AlertDescription` behind a flat props API.
+
+```tsx
+import { Alert } from "@lindaui/ui/alert";
+
+function Example() {
+  return (
+    <Alert
+      title="Action required"
+      description="Your subscription expires in 3 days. Renew now to avoid service interruption."
+    />
+  );
+}
+```
+
+You can pass `children` alongside or instead of `description` for richer content:
+
+```tsx
+<Alert title="Deployment complete">
+  <p>Version <strong>2.4.1</strong> was deployed successfully at 14:32 UTC.</p>
+</Alert>
+```
+
+<ParamField body="title" type="ReactNode">
+  Short heading displayed at the top of the alert.
+</ParamField>
+
+<ParamField body="description" type="ReactNode">
+  Supporting text rendered below the title.
+</ParamField>
+
+<ParamField body="children" type="ReactNode">
+  Optional custom content appended after the description inside the alert body.
+</ParamField>
+
+---
+
+## Badge
+
+`<Badge>` is a bespoke component that uses `@lindaui/tokens` semantic colours — it is **not** a HeroUI component. Use it to label statuses, categories, or counts inline. Choose a `variant` that matches the semantic meaning of the content.
+
+```tsx
+import { Badge } from "@lindaui/ui/badge";
+
+function Example() {
+  return (
+    <div className="flex gap-2">
+      <Badge variant="default">Draft</Badge>
+      <Badge variant="info">In review</Badge>
+      <Badge variant="warning">Pending</Badge>
+      <Badge variant="success">Published</Badge>
+      <Badge variant="danger">Rejected</Badge>
+    </div>
+  );
+}
+```
+
+<ParamField body="variant" type='"default" | "success" | "warning" | "danger" | "info"' default='"default"'>
+  Controls the background and text colour of the badge using Linda UI's token system:
+
+  - `default` — neutral overlay background, foreground text
+  - `success` — green tones
+  - `warning` — yellow tones
+  - `danger` — red tones
+  - `info` — accent colour at reduced opacity
+</ParamField>
+
+<ParamField body="children" type="ReactNode" required>
+  The text or content displayed inside the badge.
+</ParamField>
+
+<ParamField body="className" type="string">
+  Additional Tailwind classes to apply to the badge `<span>`.
+</ParamField>
+
+---
+
+## StatusChip
+
+`<StatusChip>` maps a fixed set of document workflow statuses to the appropriate `Badge` variant automatically. Use it wherever you display an `InformeStatus` value so the colour mapping stays consistent across your application.
+
+```tsx
+import { StatusChip } from "@lindaui/ui/status-chip";
+
+function Example() {
+  return (
+    <div className="flex gap-2">
+      <StatusChip status="BORRADOR" />
+      <StatusChip status="CONFIRMADO" />
+      <StatusChip status="FIRMADO" />
+    </div>
+  );
+}
+```
+
+The three accepted status values and their visual mappings are:
+
+| `status`      | Label        | Badge variant |
+|---------------|--------------|---------------|
+| `BORRADOR`    | Borrador     | `default`     |
+| `CONFIRMADO`  | Confirmado   | `warning`     |
+| `FIRMADO`     | Firmado      | `success`     |
+
+<ParamField body="status" type='"BORRADOR" | "CONFIRMADO" | "FIRMADO"' required>
+  The workflow status to display. The component derives its label and colour variant from this value automatically.
+</ParamField>
+
+---
+
+## Avatar
+
+`<Avatar>` is a thin wrapper around HeroUI v3's `Avatar`. Pass any HeroUI `AvatarProps` directly — `src`, `name`, `size`, `isBordered`, and so on. The component forwards all props unchanged.
+
+```tsx
+import { Avatar } from "@lindaui/ui/avatar";
+
+function Example() {
+  return (
+    <div className="flex gap-3">
+      <Avatar src="https://example.com/alice.jpg" name="Alice Johnson" />
+      <Avatar name="Bob Smith" />
+      <Avatar src="https://example.com/carol.jpg" isBordered />
+    </div>
+  );
+}
+```
+
+<Note>
+  Linda UI exposes only the root `Avatar` component, not sub-parts like `Avatar.Image` or `Avatar.Fallback`. Pass `src` for an image avatar and `name` for the initials fallback — HeroUI handles the rest.
+</Note>
+
+---
+
+## Chip
+
+`<Chip>` is a thin wrapper around HeroUI v3's `Chip`. Pass HeroUI `ChipProps` directly. Chips are useful for tags, filters, and removable labels.
+
+```tsx
+import { Chip } from "@lindaui/ui/chip";
+
+function Example() {
+  return (
+    <div className="flex gap-2">
+      <Chip>React</Chip>
+      <Chip color="success" variant="flat">Active</Chip>
+      <Chip color="danger" variant="bordered" onClose={() => {}}>
+        Removable
+      </Chip>
+    </div>
+  );
+}
+```
+
+<Tip>
+  For workflow status labels tied to a fixed set of values, prefer `<StatusChip>` over a raw `<Chip>` to keep colour semantics consistent.
+</Tip>
+
+---
+
+## Card and Surface
+
+`<Card>` and `<Surface>` are compound re-exports of HeroUI v3. You compose them from their individual parts rather than using a single monolithic component.
+
+### Card
+
+`Card` is a structured content container with header, content, and footer zones.
+
+```tsx
+import {
+  Card,
+  CardHeader,
+  CardTitle,
+  CardDescription,
+  CardContent,
+  CardFooter,
+} from "@lindaui/ui/card";
+import { Button } from "@lindaui/ui/button";
+
+function Example() {
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle>Project Alpha</CardTitle>
+        <CardDescription>Internal tooling rewrite — Q3 2025</CardDescription>
+      </CardHeader>
+      <CardContent>
+        <p>Current progress: 68% complete across all milestones.</p>
+      </CardContent>
+      <CardFooter>
+        <Button variant="secondary">View details</Button>
+      </CardFooter>
+    </Card>
+  );
+}
+```
+
+Available card parts exported from `@lindaui/ui/card`:
+
+- `Card` — root container
+- `CardHeader` — top section, typically holds title and description
+- `CardTitle` — primary heading inside the header
+- `CardDescription` — secondary text inside the header
+- `CardContent` — main body area
+- `CardFooter` — bottom section, typically holds actions
+
+### Surface
+
+`<Surface>` is a lower-level elevation container without pre-defined header/body/footer slots. Use it when you need a styled backdrop for arbitrary content that does not fit the `Card` structure.
+
+```tsx
+import { Surface } from "@lindaui/ui/surface";
+
+function Example() {
+  return (
+    <Surface>
+      <p className="p-4">Any content can go here without a fixed layout.</p>
+    </Surface>
+  );
+}
+```
+
+<Note>
+  Both `Card` and `Surface` are direct re-exports of HeroUI v3. Consult the HeroUI v3 documentation for the full `CardProps` and `SurfaceProps` API, including shadow levels and border options.
+</Note>

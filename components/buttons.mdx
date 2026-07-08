@@ -1,0 +1,207 @@
+---
+title: "Button, Toggle, and Close Buttons in Linda UI"
+sidebarTitle: "Buttons"
+description: "Learn how to use Button, ToggleButton, ToggleButtonGroup, and CloseButton components to build interactive, accessible UIs in Linda UI."
+---
+
+Linda UI ships three button primitives that cover the full spectrum of interactive affordances: a general-purpose `Button` with five semantic variants, a `ToggleButton` and `ToggleButtonGroup` for selection states, and a focused `CloseButton` for dismissal patterns. All button components are React Aria Components (RAC) under the hood, so they follow the `onPress` convention instead of `onClick` and carry full keyboard and screen-reader support out of the box.
+
+## Button
+
+The `Button` component is your primary call-to-action element. Import it from its dedicated entry point and choose a `variant` to communicate intent.
+
+```tsx
+import { Button } from "@lindaui/ui/button";
+```
+
+### Variants
+
+<CodeGroup>
+
+```tsx Primary (default)
+<Button variant="primary" onPress={() => console.log("saved")}>
+  Save changes
+</Button>
+```
+
+```tsx Secondary
+<Button variant="secondary" onPress={() => console.log("cancel")}>
+  Cancel
+</Button>
+```
+
+```tsx Ghost
+<Button variant="ghost" onPress={() => console.log("more")}>
+  Show more
+</Button>
+```
+
+```tsx Danger
+<Button variant="danger" onPress={() => console.log("delete")}>
+  Delete account
+</Button>
+```
+
+```tsx Link
+<Button variant="link" onPress={() => console.log("learn more")}>
+  Learn more
+</Button>
+```
+
+</CodeGroup>
+
+<Warning>
+  Use `variant` to control visual style — **never** `color`. Linda UI does not expose a `color` prop on `Button`. Passing `color` has no effect and will cause a TypeScript error.
+</Warning>
+
+### Disabled and pending states
+
+`Button` accepts `isDisabled` to prevent interaction and `isPending` to show a loading indicator while an async operation is in progress.
+
+```tsx
+<Button variant="primary" isPending={isSubmitting} onPress={handleSubmit}>
+  Submit
+</Button>
+
+<Button variant="secondary" isDisabled>
+  Not available
+</Button>
+```
+
+### Props
+
+<ParamField path="variant" type='"primary" | "secondary" | "ghost" | "danger" | "link"' default='"primary"'>
+  Controls the visual style and semantic weight of the button.
+</ParamField>
+
+<ParamField path="onPress" type="() => void">
+  Called when the button is activated via pointer, keyboard, or assistive technology. Prefer `onPress` over `onClick` in all RAC-based components.
+</ParamField>
+
+<ParamField path="isDisabled" type="boolean" default="false">
+  Prevents all interaction and renders the button in a visually disabled state.
+</ParamField>
+
+<ParamField path="isPending" type="boolean" default="false">
+  Renders a loading indicator and blocks further presses until the state clears. Use this for async actions like form submissions.
+</ParamField>
+
+---
+
+## ToggleButton and ToggleButtonGroup
+
+`ToggleButton` is a pressable element that maintains an on/off state. When you need mutually exclusive or multi-select options, wrap several `ToggleButton` elements in a `ToggleButtonGroup`.
+
+```tsx
+import { ToggleButton } from "@lindaui/ui/toggle-button";
+import { ToggleButtonGroup } from "@lindaui/ui/toggle-button-group";
+```
+
+### Single-selection group
+
+Use `selectionMode="single"` for mutually exclusive options (equivalent to a radio group). The `onSelectionChange` callback emits a `Set<Key>` — spread it with `[...set]` to access the selected key.
+
+```tsx
+import { useState } from "react";
+import { ToggleButton } from "@lindaui/ui/toggle-button";
+import { ToggleButtonGroup } from "@lindaui/ui/toggle-button-group";
+
+export function ViewSwitcher() {
+  const [view, setView] = useState<string>("grid");
+
+  return (
+    <ToggleButtonGroup
+      selectionMode="single"
+      selectedKeys={new Set([view])}
+      onSelectionChange={(set) => {
+        const next = [...set][0];
+        if (next) setView(String(next));
+      }}
+    >
+      <ToggleButton id="grid">Grid</ToggleButton>
+      <ToggleButton id="list">List</ToggleButton>
+      <ToggleButton id="table">Table</ToggleButton>
+    </ToggleButtonGroup>
+  );
+}
+```
+
+<Tip>
+  With `selectionMode="single"`, each `ToggleButton` renders as `role="radio"` for full screen-reader compatibility. The parent group automatically manages focus movement with arrow keys.
+</Tip>
+
+### Multi-selection group
+
+Use `selectionMode="multiple"` when users should be able to activate several options at once.
+
+```tsx
+import { useState } from "react";
+import { ToggleButton } from "@lindaui/ui/toggle-button";
+import { ToggleButtonGroup } from "@lindaui/ui/toggle-button-group";
+
+export function TextFormatting() {
+  const [formats, setFormats] = useState<Set<string>>(new Set());
+
+  return (
+    <ToggleButtonGroup
+      selectionMode="multiple"
+      selectedKeys={formats}
+      onSelectionChange={(set) => setFormats(new Set([...set].map(String)))}
+    >
+      <ToggleButton id="bold">Bold</ToggleButton>
+      <ToggleButton id="italic">Italic</ToggleButton>
+      <ToggleButton id="underline">Underline</ToggleButton>
+    </ToggleButtonGroup>
+  );
+}
+```
+
+### Props — ToggleButtonGroup
+
+<ParamField path="selectionMode" type='"single" | "multiple"'>
+  Determines whether one or many buttons can be active at once.
+</ParamField>
+
+<ParamField path="onSelectionChange" type="(keys: Set<Key>) => void">
+  Fires whenever the selection changes. The argument is a `Set<Key>`. Use `[...set][0]` to extract the first (and only) key in single-selection mode.
+</ParamField>
+
+<ParamField path="selectedKeys" type="Set<Key>">
+  The currently selected keys (controlled mode). Omit to use uncontrolled mode.
+</ParamField>
+
+### Props — ToggleButton
+
+<ParamField path="id" type="string">
+  A unique identifier for this button within its group. Used as the key in the `Set<Key>` emitted by `onSelectionChange`.
+</ParamField>
+
+<ParamField path="isDisabled" type="boolean" default="false">
+  Prevents the button from being toggled.
+</ParamField>
+
+---
+
+## CloseButton
+
+`CloseButton` is a compact icon button intended exclusively for dismissal actions — closing modals, removing notifications, clearing chips, and similar patterns.
+
+```tsx
+import { CloseButton } from "@lindaui/ui/close-button";
+```
+
+```tsx
+<CloseButton onPress={() => setOpen(false)} />
+```
+
+The button renders a visually accessible close icon and announces itself as "Close" to screen readers without requiring any additional label.
+
+### Props
+
+<ParamField path="onPress" type="() => void">
+  Called when the close button is activated. Connect this to any dismissal handler — state setters, router navigation, or side-effect callbacks.
+</ParamField>
+
+<ParamField path="isDisabled" type="boolean" default="false">
+  Prevents dismissal, for example while a save operation is in flight.
+</ParamField>

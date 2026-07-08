@@ -1,0 +1,204 @@
+---
+title: "Customize Linda UI Themes with CSS Variables"
+sidebarTitle: "Theming"
+description: "Override Linda UI's canonical CSS variables to apply your brand colors, radius, and field styles. No rebuild needed — changes take effect at runtime."
+---
+
+Linda UI's entire visual appearance is driven by CSS custom properties. Every component color, border, focus ring, and border radius reads a variable at runtime, so you can re-skin the full system by overriding a small set of **canonical** variables in a single CSS file. You never need to rebuild `@lindaui/tokens`, fork a component, or touch any TypeScript — write CSS, ship CSS, done.
+
+## How theming works
+
+The token system has three layers that reference each other in one direction:
+
+1. **Canonical variables** (`--primary`, `--background`, `--border`, …) — the single source of truth. These are the only variables you need to override. Light values live in `:root`; dark values live in `.dark`.
+2. **HeroUI v3 contract variables** (`--accent`, `--surface`, `--default`, `--danger`, `--focus`, …) — names that HeroUI reads internally to paint its components. These are pre-wired as references to the canonical layer (`--accent: var(--primary)`, etc.) and update automatically when you change the canonicals.
+3. **Tailwind v4 utilities** (`--color-primary`, `--color-card`, `--color-ring`, …) — defined in an `@theme inline` block. They power classes like `bg-primary`, `text-muted-foreground`, and `border-ring`. These also reference the canonical layer and need no maintenance on your part.
+
+The rule of thumb: **override only the canonical variables**. The HeroUI and Tailwind layers follow for free.
+
+## Canonical variables reference
+
+These are the variables you override to apply your brand:
+
+| Variable | Default (light) | Purpose |
+|---|---|---|
+| `--primary` | `oklch(0.47 0.097 183)` | Brand color (teal-700). Used for primary buttons, active states, and focus rings. |
+| `--primary-foreground` | `oklch(0.985 0 0)` | Text rendered on top of `--primary` surfaces. |
+| `--background` | `oklch(1 0 0)` | Page background. |
+| `--foreground` | `oklch(0.145 0 0)` | Base text color. |
+| `--card` | `oklch(1 0 0)` | Card and panel surface color. |
+| `--card-foreground` | `oklch(0.145 0 0)` | Text on card surfaces. |
+| `--secondary` | `oklch(0.97 0 0)` | Neutral surface (secondary buttons, subtle backgrounds). |
+| `--muted-foreground` | `oklch(0.556 0 0)` | Dimmed / helper text, placeholders. |
+| `--border` | `oklch(0.922 0 0)` | Default border color. |
+| `--input` | `oklch(0.922 0 0)` | Input field border color (matches `--border` by default). |
+| `--ring` | `oklch(0.47 0.097 183)` | Focus ring color (normally matches `--primary`). |
+| `--radius` | `0.625rem` | Base border radius. All radius scale steps (`--radius-sm` through `--radius-4xl`) derive from this. |
+| `--destructive` | `oklch(0.577 0.245 27.325)` | Error / destructive action color. |
+| `--success` | `oklch(0.59 0.163 148)` | Success state color. |
+| `--warning` | `oklch(0.56 0.14 58)` | Warning state color. |
+
+## Complete theme example
+
+Copy `theme-template.css` from the `@lindaui/tokens` package as a starting point (see [Reference the template](#reference-the-template) below), then fill in your brand values:
+
+```css theme.css
+/* Your brand theme — import this AFTER @lindaui/tokens/css */
+
+:root {
+  /* Brand color — replace with your primary hue */
+  --primary: oklch(0.52 0.18 270);         /* indigo-600 */
+  --primary-foreground: oklch(0.985 0 0);
+
+  /* Surfaces */
+  --background: oklch(0.99 0 0);
+  --foreground: oklch(0.12 0 0);
+  --card: oklch(1 0 0);
+  --card-foreground: oklch(0.12 0 0);
+  --secondary: oklch(0.96 0 0);
+  --secondary-foreground: oklch(0.2 0 0);
+  --muted-foreground: oklch(0.52 0 0);
+
+  /* Borders and interaction */
+  --border: oklch(0.91 0 0);
+  --input: oklch(0.91 0 0);
+  --ring: oklch(0.52 0.18 270);            /* match --primary */
+
+  /* Shape */
+  --radius: 0.5rem;
+
+  /* State colors */
+  --destructive: oklch(0.577 0.245 27.325);
+  --success: oklch(0.59 0.163 148);
+  --warning: oklch(0.56 0.14 58);
+}
+
+/* Dark mode overrides — only redefine what changes */
+.dark {
+  --primary: oklch(0.73 0.16 270);         /* lighter in dark */
+  --primary-foreground: oklch(0.12 0 0);
+
+  --background: oklch(0.13 0 0);
+  --foreground: oklch(0.98 0 0);
+  --card: oklch(0.18 0 0);
+  --card-foreground: oklch(0.98 0 0);
+  --secondary: oklch(0.25 0 0);
+  --secondary-foreground: oklch(0.98 0 0);
+  --muted-foreground: oklch(0.7 0 0);
+
+  --border: oklch(1 0 0 / 10%);
+  --input: oklch(1 0 0 / 15%);
+  --ring: oklch(0.73 0.16 270);
+}
+```
+
+## Loading your custom theme
+
+Import the token bundle first, then your theme file. Order matters — your overrides must land after the defaults:
+
+```tsx app/layout.tsx
+import "@lindaui/tokens/css";   // HeroUI + Tailwind utilities + default teal theme
+import "./theme.css";            // your brand — overrides canonical variables
+```
+
+That's all you need. Every component, block, and utility class reads the variables at paint time, so the override takes effect everywhere immediately.
+
+## Field styling
+
+Form fields (inputs, textareas, selects, date pickers, search fields) read a dedicated set of `--field-*` variables. These are the only reliable way to restyle field interiors — component wrappers intentionally reject `className` on the inner `<input>` element to avoid silent misses. Override these variables to re-skin every field at once:
+
+| Variable | Default reference | Purpose |
+|---|---|---|
+| `--field-background` | `var(--background)` | Field input surface color. |
+| `--field-foreground` | `var(--foreground)` | Typed text color inside the field. |
+| `--field-placeholder` | `var(--muted-foreground)` | Placeholder text color. |
+| `--field-border` | `var(--input)` | Resting border color. |
+| `--field-border-hover` | `var(--input)` | Border color on hover. |
+| `--field-border-focus` | `var(--ring)` | Border color when the field has focus. |
+| `--field-focus` | `var(--ring)` | Focus ring / glow color. |
+| `--field-radius` | `var(--radius)` | Border radius of the field container. |
+
+To give fields a different surface than the page background, override `--field-background` alongside `--field-border`:
+
+```css theme.css
+:root {
+  --field-background: oklch(0.97 0 0);   /* subtle off-white */
+  --field-border: oklch(0.85 0 0);
+  --field-border-hover: oklch(0.7 0 0);
+}
+```
+
+## Runtime theme switching
+
+You can support multiple named themes in one project and switch between them at runtime with `data-theme`. Scope each theme's canonical variables under a `[data-theme="x"]` attribute selector instead of `:root`. For dark variants, combine both selectors:
+
+```css theme.css
+/* Ocean theme — light */
+[data-theme="ocean"] {
+  --primary: oklch(0.55 0.13 240);
+  --primary-foreground: oklch(0.985 0 0);
+  --ring: oklch(0.55 0.13 240);
+}
+
+/* Ocean theme — dark */
+[data-theme="ocean"].dark {
+  --primary: oklch(0.78 0.12 240);
+  --primary-foreground: oklch(0.205 0 0);
+  --ring: oklch(0.78 0.12 240);
+}
+
+/* Forest theme — light */
+[data-theme="forest"] {
+  --primary: oklch(0.48 0.14 145);
+  --primary-foreground: oklch(0.985 0 0);
+  --ring: oklch(0.48 0.14 145);
+}
+```
+
+Switch the active theme in JavaScript by writing to `dataset.theme` on whatever ancestor element holds your scoped styles:
+
+```ts
+// Switch theme
+document.documentElement.dataset.theme = "ocean";
+
+// Toggle dark mode
+document.documentElement.classList.toggle("dark");
+
+// Reset to default theme
+delete document.documentElement.dataset.theme;
+```
+
+The variables cascade immediately — no page reload, no re-render loop.
+
+## Dark mode
+
+Dark mode works through the `.dark` CSS class. Add it to any ancestor element and all components inside that subtree switch to their dark palette. Linda UI redefines only the canonical variables inside `.dark`; the HeroUI and Tailwind utility layers follow automatically because they reference the same variables.
+
+```tsx
+{/* Entire page in dark mode */}
+<html className="dark">
+
+{/* Only this section in dark mode */}
+<aside className="dark">
+  <LoginForm onSubmit={handleSubmit} />
+</aside>
+```
+
+<Tip>
+  You can scope `.dark` to any element, not just `<html>`. This lets you render a dark sidebar next to a light main panel, or preview both modes simultaneously in a settings UI.
+</Tip>
+
+## Reference the template
+
+`@lindaui/tokens` ships a ready-to-copy template at `theme-template.css`. It lists every overridable canonical variable with the default teal values pre-filled and inline comments explaining each group. Use it as the starting point for your `theme.css`:
+
+```bash
+# Copy the template into your project
+cp node_modules/@lindaui/tokens/theme-template.css ./src/theme.css
+```
+
+Then import it after the token bundle as shown in [Loading your custom theme](#loading-your-custom-theme).
+
+<Warning>
+  Do not override the HeroUI contract variables (`--accent`, `--surface`, `--default`, `--danger`, `--focus`, etc.) or the Tailwind utility variables (`--color-primary`, `--color-card`, etc.) directly. They are references that update automatically when you change the canonicals. Overriding them breaks the cascade and can produce inconsistent results across components.
+</Warning>

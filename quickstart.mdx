@@ -1,47 +1,117 @@
 ---
-title: "Quickstart"
-description: "Begin with a guide on the fastest path to a successful outcome"
+title: "Get Started with Linda UI in 5 Minutes"
+sidebarTitle: "Quickstart"
+description: "Install Linda UI's three packages, import the CSS bundle, and render your first component and block in a new React 19 or Next.js project."
 ---
 
-Describe how someone begins using your product. What is the first thing they need to do? Are there any prerequisites?
+Linda UI ships as three focused packages that you can install together in one command. This guide walks you through installation, wiring up the CSS bundle at your app root, and rendering your first component and block. By the end you'll have a working button and a fully functional login form.
 
-A quickstart should take someone from zero to using your product. They'll get a quick win and a sense of what they can accomplish.
-
-## Prerequisites
-
-Before you begin, you must have:
-
-- Requirement one (for example, Node.js 18+, a free account, an API key)
-- Requirement two (for example, a compatible device, a compatible browser, a compatible operating system)
-
-## Get started
+<Note>
+  Linda UI requires the following peer dependencies in your project: `react >=19`, `react-dom >=19`, and `react-hook-form >=7`. Blocks that render charts also need `recharts >=3`, and all blocks use icons from `lucide-react >=0.4`. Install any that are missing alongside the Linda UI packages.
+</Note>
 
 <Steps>
-  <Step title="Install">
-    Describe how to install your product or sign up.
 
-    ```bash
-    npm install your-package
-    ```
-  </Step>
-  <Step title="Configure">
-    Describe any setup or configuration needed before first use.
+### Install the packages
 
-    ```bash
-    your-cli init
-    ```
-  </Step>
-  <Step title="Run it">
-    Show the first thing a user does to see it working.
+Install all three Linda UI packages and their peer dependencies:
 
-    ```bash
-    your-cli start
-    ```
-  </Step>
-</Steps>
+<CodeGroup>
+
+```bash npm
+npm install @lindaui/tokens @lindaui/ui @lindaui/blocks react react-dom react-hook-form lucide-react
+```
+
+```bash yarn
+yarn add @lindaui/tokens @lindaui/ui @lindaui/blocks react react-dom react-hook-form lucide-react
+```
+
+```bash pnpm
+pnpm add @lindaui/tokens @lindaui/ui @lindaui/blocks react react-dom react-hook-form lucide-react
+```
+
+</CodeGroup>
+
+### Import the CSS bundle at your app root
+
+Import `@lindaui/tokens/css` **once** at the top of your application entry point. This single import loads HeroUI v3 base styles, the OKLCH brand tokens, and all Tailwind v4 utilities the components rely on.
+
+For a Next.js App Router project, add the import to your root layout:
+
+```tsx app/layout.tsx
+import "@lindaui/tokens/css";
+import type { ReactNode } from "react";
+
+export default function RootLayout({ children }: { children: ReactNode }) {
+  return (
+    <html lang="en">
+      <body>{children}</body>
+    </html>
+  );
+}
+```
 
 <Tip>
-  Give people a way to get help. This could be a link to a support page, a chat with a customer support agent, or a forum for your product.
-
-  Example: Need help? Reach out to us at [support@yourcompany.com](mailto:support@yourcompany.com).
+  To enable dark mode, add the `.dark` class to any ancestor element — for example `<html className="dark">` for a site-wide dark theme, or `<div className="dark">` to scope it to a section. Remove the class to return to light mode. No extra configuration is required.
 </Tip>
+
+### Render your first component
+
+Import a component from its dedicated entry point and use it in any client or server component. Here is a simple button example:
+
+```tsx app/page.tsx
+import { Button } from "@lindaui/ui/button";
+
+export default function Page() {
+  return (
+    <main>
+      <Button variant="primary" onPress={() => console.log("clicked")}>
+        Get started
+      </Button>
+    </main>
+  );
+}
+```
+
+`Button` accepts a `variant` prop (`"primary"`, `"secondary"`, `"ghost"`, `"danger"`, or `"link"`) along with all standard react-aria button props such as `isDisabled` and `onPress`.
+
+### Add your first block
+
+Blocks are pre-assembled sections that manage their own internal state. You provide data and event handlers; the block handles rendering and accessibility. Here is the `LoginForm` block wired to an async submit handler:
+
+```tsx app/login/page.tsx
+"use client";
+
+import { LoginForm, type LoginValues } from "@lindaui/blocks/login-form";
+
+export default function LoginPage() {
+  async function handleSubmit(values: LoginValues) {
+    // values: { email: string; password: string }
+    const response = await fetch("/api/auth/login", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(values),
+    });
+
+    if (!response.ok) {
+      throw new Error("Login failed");
+    }
+  }
+
+  return (
+    <div className="flex min-h-screen items-center justify-center">
+      <LoginForm
+        onSubmit={handleSubmit}
+        title="Sign in to your account"
+        submitLabel="Sign in"
+      />
+    </div>
+  );
+}
+```
+
+`LoginForm` renders email and password fields, manages form state with react-hook-form internally, and calls your `onSubmit` handler with typed `LoginValues`. Pass `loading={true}` to disable the submit button during async work, and pass an `error` string to surface server-side errors inline.
+
+</Steps>
+
+You now have a working Linda UI setup. Next, explore [theming](/theming) to learn how to override CSS variables and apply your own brand.

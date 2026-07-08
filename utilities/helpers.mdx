@@ -1,0 +1,167 @@
+---
+title: "Search Utilities and Class Name Helpers"
+sidebarTitle: "Helpers"
+description: "Accent- and case-insensitive search helpers for filtering lists, plus a Tailwind-aware class name merging utility for deduplication."
+---
+
+Linda UI provides two small but essential utility modules: a pair of search helpers for filtering lists without breaking on accented characters or mixed casing, and a `cn` function for safely merging Tailwind class strings. Neither module has any React dependency — you can use them in plain TypeScript files, server components, or anywhere else.
+
+## Search utilities
+
+Import `normalizeText` and `matchesSearch` from `@lindaui/ui/search`:
+
+```ts
+import { normalizeText, matchesSearch } from "@lindaui/ui/search";
+```
+
+### normalizeText
+
+Converts a string to a stable, comparison-friendly token by applying three transformations in order: Unicode NFD decomposition (splits combined characters into base + diacritic), removal of all combining diacritical marks (U+0300–U+036F), lowercasing, and trimming.
+
+```ts
+normalizeText("José María") // → "jose maria"
+normalizeText("  ÑOÑO  ")   // → "nono"
+normalizeText("Ångström")   // → "angstrom"
+```
+
+<ParamField path="value" type="string" required>
+  The input string to normalize. Safe to call with any Unicode string.
+</ParamField>
+
+**Returns** `string` — the normalized form. The ñ character normalizes to `"n"`, which is the conventional and desirable behaviour for tolerant search.
+
+### matchesSearch
+
+Checks whether a `query` substring appears anywhere inside `haystack`, after normalizing both sides. An empty query always returns `true` so that an empty search box never hides items.
+
+```ts
+matchesSearch("José García", "garcia") // → true
+matchesSearch("RADIOLOGÍA", "radio")   // → true
+matchesSearch("Paediatrics", "")       // → true  (empty query → show all)
+matchesSearch("Cardiology", "neuro")   // → false
+```
+
+<ParamField path="haystack" type="string" required>
+  The text to search within — typically an item's label, name, or description.
+</ParamField>
+
+<ParamField path="query" type="string" required>
+  The user's search input. Pass the raw value from your search field; normalization
+  is handled internally.
+</ParamField>
+
+**Returns** `boolean`.
+
+### Filtering a list
+
+Use `matchesSearch` inside a `.filter()` call. You own the state — wire it to a `SearchField` or any plain `<input>`:
+
+```tsx
+import { useState } from "react";
+import { matchesSearch } from "@lindaui/ui/search";
+import { SearchField } from "@lindaui/ui/search-field";
+
+const doctors = [
+  { id: 1, name: "Dr. María López" },
+  { id: 2, name: "Dr. José García" },
+  { id: 3, name: "Dr. Álex Núñez" },
+];
+
+export function DoctorList() {
+  const [query, setQuery] = useState("");
+
+  const visible = doctors.filter((doc) =>
+    matchesSearch(doc.name, query)
+  );
+
+  return (
+    <>
+      <SearchField
+        label="Search doctors"
+        value={query}
+        onChange={setQuery}
+      />
+      <ul>
+        {visible.map((doc) => (
+          <li key={doc.id}>{doc.name}</li>
+        ))}
+      </ul>
+    </>
+  );
+}
+```
+
+<Tip>
+  `matchesSearch` performs a substring match, not a prefix match, so
+  searching for `"garcia"` finds `"José García"` regardless of where the
+  token appears in the string. Combine multiple calls with `&&` or `||`
+  to search across several fields at once.
+</Tip>
+
+---
+
+## cn — class name helper
+
+`cn` merges any number of class strings, arrays, or conditional objects into a single deduplicated Tailwind-aware string. It is a direct re-export of `cn` from `tailwind-variants`, the same function HeroUI uses internally, so there is one shared implementation across the whole system.
+
+```ts
+import { cn } from "@lindaui/ui/cn";
+```
+
+### Parameters
+
+<ParamField path="...classes" type="ClassValue[]" required>
+  Any number of class values — strings, arrays, or objects (same API as `clsx`).
+  Tailwind conflicts are resolved by keeping the last winning class.
+</ParamField>
+
+**Returns** `string` — a single merged class string.
+
+### Examples
+
+<CodeGroup>
+```ts Deduplication
+import { cn } from "@lindaui/ui/cn";
+
+// Tailwind conflict resolution — last value wins
+cn("px-4 py-2", "px-8")
+// → "py-2 px-8"
+```
+
+```ts Conditional classes
+import { cn } from "@lindaui/ui/cn";
+
+function Badge({ active }: { active: boolean }) {
+  return (
+    <span
+      className={cn(
+        "rounded-full px-2 py-0.5 text-sm font-medium",
+        active
+          ? "bg-primary text-primary-foreground"
+          : "bg-secondary text-muted-foreground"
+      )}
+    >
+      {active ? "Active" : "Inactive"}
+    </span>
+  );
+}
+```
+
+```ts Array and object syntax
+import { cn } from "@lindaui/ui/cn";
+
+const base = "flex items-center gap-2";
+const extras = ["font-semibold", { "opacity-50": isDisabled }];
+
+cn(base, extras)
+// → "flex items-center gap-2 font-semibold opacity-50"  (when isDisabled = true)
+```
+</CodeGroup>
+
+<Warning>
+  Field components (`Input`, `Textarea`, `NumberInput`, `SearchField`) in
+  `@lindaui/ui` intentionally reject a `className` prop at the TypeScript level.
+  Adding classes to a field wrapper would never reach the underlying `<input>` element
+  — a silent styling miss. Use the `--field-*` CSS custom properties instead to
+  re-skin fields.
+</Warning>

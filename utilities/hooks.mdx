@@ -1,0 +1,150 @@
+---
+title: "React Hooks: useDisclosure and useMediaQuery"
+sidebarTitle: "Hooks"
+description: "Lightweight React hooks for controlling overlay open/close state and responding to viewport breakpoints, with full SSR safety."
+---
+
+Linda UI ships two utility hooks — `useDisclosure` for managing boolean open/close state on overlays, and `useMediaQuery` (plus its convenience variants) for reacting to viewport size changes. Both hooks are marked `"use client"` and work as leaf client components inside React Server Component apps.
+
+## useDisclosure
+
+`useDisclosure` gives you a stable boolean state value plus three memoized callbacks to drive any controlled overlay — dialogs, drawers, popovers, or menus.
+
+```ts
+import { useDisclosure } from "@lindaui/ui/use-disclosure";
+
+const { isOpen, open, close, toggle } = useDisclosure(defaultOpen?);
+```
+
+### Parameters
+
+<ParamField path="defaultOpen" type="boolean" default="false">
+  Whether the disclosure starts in the open state. Omit it (or pass `false`) for
+  closed-by-default overlays.
+</ParamField>
+
+### Return value
+
+<ParamField path="isOpen" type="boolean">
+  The current open/closed state.
+</ParamField>
+
+<ParamField path="open" type="() => void">
+  Forces the state to `true`. Stable reference — safe to pass as a prop without
+  causing re-renders.
+</ParamField>
+
+<ParamField path="close" type="() => void">
+  Forces the state to `false`. Stable reference.
+</ParamField>
+
+<ParamField path="toggle" type="() => void">
+  Flips the current state. Stable reference.
+</ParamField>
+
+### Controlling a Dialog
+
+Pair `useDisclosure` with `@lindaui/ui/dialog` using `isOpen` and `onClose`:
+
+```tsx
+import { useDisclosure } from "@lindaui/ui/use-disclosure";
+import { Dialog } from "@lindaui/ui/dialog";
+import { Button } from "@lindaui/ui/button";
+
+export function DeleteConfirmation() {
+  const disclosure = useDisclosure();
+
+  return (
+    <>
+      <Button variant="danger" onPress={disclosure.open}>
+        Delete record
+      </Button>
+
+      <Dialog
+        open={disclosure.isOpen}
+        onClose={disclosure.close}
+        title="Delete record"
+        footer={
+          <Button variant="danger" onPress={disclosure.close}>
+            Confirm delete
+          </Button>
+        }
+      >
+        This action cannot be undone.
+      </Dialog>
+    </>
+  );
+}
+```
+
+<Note>
+  All three callbacks (`open`, `close`, `toggle`) are wrapped in `useCallback`
+  with no dependencies, so they keep the same reference across every render.
+  You can safely include them in `useEffect` dependency arrays or pass them as
+  props to memoized child components without triggering unnecessary re-renders.
+</Note>
+
+---
+
+## useMediaQuery
+
+`useMediaQuery` subscribes to any CSS media query string and returns a boolean that updates whenever the viewport crosses the query boundary.
+
+```ts
+import { useMediaQuery } from "@lindaui/ui/use-media-query";
+
+const matches = useMediaQuery("(min-width: 1024px)");
+```
+
+### Parameters
+
+<ParamField path="query" type="string" required>
+  Any valid CSS media query string, for example `"(prefers-color-scheme: dark)"` or
+  `"(min-width: 1024px)"`.
+</ParamField>
+
+### Return value
+
+<ParamField path="matches" type="boolean">
+  `true` when the current viewport satisfies the query, `false` otherwise.
+  Returns `false` on the server (no `window` available).
+</ParamField>
+
+<Note>
+  `useMediaQuery` is SSR-safe. On the server — or in any environment where
+  `window.matchMedia` is unavailable — the hook returns `false` without
+  throwing. The correct value is hydrated on the client during the first
+  effect.
+</Note>
+
+### useIsDesktop and useIsMobile
+
+Two pre-built convenience hooks anchor to Linda UI's `md` breakpoint (768 px):
+
+```ts
+import {
+  useIsDesktop,
+  useIsMobile,
+} from "@lindaui/ui/use-media-query";
+
+const isDesktop = useIsDesktop(); // true when viewport >= 768px
+const isMobile = useIsMobile();   // true when viewport < 768px
+```
+
+They are exact complements of each other — `useIsMobile()` is simply `!useMediaQuery("(min-width: 768px)")`.
+
+```tsx
+import { useIsDesktop } from "@lindaui/ui/use-media-query";
+
+export function ResponsiveNav() {
+  const isDesktop = useIsDesktop();
+
+  return isDesktop ? <SidebarNav /> : <BottomNav />;
+}
+```
+
+<Tip>
+  Because `useIsDesktop` and `useIsMobile` are derived from the same underlying
+  query string, they always agree — you will never see both return `true` at the
+  same time.
+</Tip>

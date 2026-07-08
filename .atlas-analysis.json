@@ -1,0 +1,147 @@
+{
+  "projectType": "sdk-library",
+  "projectName": "Linda UI",
+  "projectDescription": "A React 19 design system with brand tokens, accessible UI components, and composable block sections built on HeroUI v3.",
+  "theme": "willow",
+  "primaryColor": "#0F766E",
+  "lightColor": "#CCEFED",
+  "darkColor": "#0D5C56",
+  "navigation": {
+    "tabs": [
+      {
+        "tab": "Documentation",
+        "groups": [
+          {
+            "group": "Get Started",
+            "pages": [
+              "introduction",
+              "quickstart",
+              "theming"
+            ]
+          },
+          {
+            "group": "Components",
+            "pages": [
+              "components/buttons",
+              "components/inputs",
+              "components/selects",
+              "components/controls",
+              "components/overlays",
+              "components/data-display",
+              "components/feedback",
+              "components/date-time",
+              "components/color"
+            ]
+          },
+          {
+            "group": "Blocks",
+            "pages": [
+              "blocks/overview",
+              "blocks/auth",
+              "blocks/lists",
+              "blocks/charts",
+              "blocks/documents"
+            ]
+          },
+          {
+            "group": "Utilities",
+            "pages": [
+              "utilities/hooks",
+              "utilities/helpers"
+            ]
+          }
+        ]
+      },
+      {
+        "tab": "Packages",
+        "groups": [
+          {
+            "group": "Packages",
+            "pages": [
+              "packages/tokens",
+              "packages/ui",
+              "packages/blocks"
+            ]
+          }
+        ]
+      }
+    ]
+  },
+  "keyFeatures": [
+    "71 accessible React components built on HeroUI v3 (react-aria-components)",
+    "22 composable block sections for auth, lists, charts, and documents",
+    "OKLCH teal brand design tokens with automatic light/dark mode",
+    "Per-component entry points with no barrel import",
+    "Mobile-first, responsive layouts (SplitWorkspace, ListPane, TablePane)",
+    "6 chart block types (Area, Bar, Line, Pie, Radar, Radial) using recharts",
+    "Token-driven theming with zero rebuild required",
+    "TypeScript-first with stable, ergonomic flat APIs"
+  ],
+  "publicApiSurface": [
+    "@lindaui/tokens/css",
+    "@lindaui/ui/button",
+    "@lindaui/ui/input",
+    "@lindaui/ui/textarea",
+    "@lindaui/ui/number-input",
+    "@lindaui/ui/search-field",
+    "@lindaui/ui/otp-input",
+    "@lindaui/ui/input-group",
+    "@lindaui/ui/select",
+    "@lindaui/ui/combobox",
+    "@lindaui/ui/field",
+    "@lindaui/ui/checkbox",
+    "@lindaui/ui/checkbox-group",
+    "@lindaui/ui/radio",
+    "@lindaui/ui/radio-group",
+    "@lindaui/ui/switch",
+    "@lindaui/ui/switch-group",
+    "@lindaui/ui/slider",
+    "@lindaui/ui/toggle-button",
+    "@lindaui/ui/toggle-button-group",
+    "@lindaui/ui/dialog",
+    "@lindaui/ui/alert-dialog",
+    "@lindaui/ui/drawer",
+    "@lindaui/ui/popover",
+    "@lindaui/ui/tooltip",
+    "@lindaui/ui/menu",
+    "@lindaui/ui/table",
+    "@lindaui/ui/alert",
+    "@lindaui/ui/badge",
+    "@lindaui/ui/status-chip",
+    "@lindaui/ui/avatar",
+    "@lindaui/ui/chip",
+    "@lindaui/ui/card",
+    "@lindaui/ui/toast",
+    "@lindaui/ui/spinner",
+    "@lindaui/ui/skeleton",
+    "@lindaui/ui/progress",
+    "@lindaui/ui/progress-circle",
+    "@lindaui/ui/chart",
+    "@lindaui/ui/use-disclosure",
+    "@lindaui/ui/use-media-query",
+    "@lindaui/ui/search",
+    "@lindaui/ui/cn",
+    "@lindaui/blocks/login-form",
+    "@lindaui/blocks/auth-layout",
+    "@lindaui/blocks/auth-provider",
+    "@lindaui/blocks/list-pane",
+    "@lindaui/blocks/list-item",
+    "@lindaui/blocks/table-pane",
+    "@lindaui/blocks/detail-panel",
+    "@lindaui/blocks/split-workspace",
+    "@lindaui/blocks/confirm-dialog",
+    "@lindaui/blocks/image-viewer",
+    "@lindaui/blocks/recording-overlay",
+    "@lindaui/blocks/document-panel",
+    "@lindaui/blocks/document-reader",
+    "@lindaui/blocks/area-chart",
+    "@lindaui/blocks/bar-chart",
+    "@lindaui/blocks/line-chart",
+    "@lindaui/blocks/pie-chart",
+    "@lindaui/blocks/radar-chart",
+    "@lindaui/blocks/radial-chart",
+    "@lindaui/blocks/stat-card",
+    "@lindaui/blocks/chart-card",
+    "@lindaui/blocks/stats-grid"
+  ]
+}

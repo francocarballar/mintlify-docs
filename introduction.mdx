@@ -1,0 +1,50 @@
+---
+title: "What is Linda UI? React 19 Design System Overview"
+sidebarTitle: "Introduction"
+description: "Linda UI is a React 19 design system with brand tokens, 71 accessible components, and 22 composable blocks, all driven by CSS custom properties."
+---
+
+Linda UI is a production-ready design system built for React 19. It gives you a layered toolkit — brand tokens, accessible UI primitives, and fully composed section blocks — so you can move from an empty project to a polished, accessible interface without hand-rolling every pattern. Every visual decision flows through CSS custom properties, which means you can re-skin the entire system at runtime without touching a single component.
+
+## Architecture
+
+Linda UI is organized as three discrete packages that build on each other in a pyramid:
+
+```
+@lindaui/blocks   ← 22 composed sections (LoginForm, ListPane, charts …)
+     ↑
+@lindaui/ui       ← 71 accessible component primitives
+     ↑
+@lindaui/tokens   ← brand CSS (OKLCH tokens, HeroUI v3 styles, Tailwind v4 utilities)
+```
+
+**`@lindaui/tokens`** is the foundation. It ships a single CSS bundle that wires together HeroUI v3's base styles, the teal OKLCH brand palette, and the Tailwind v4 utilities that components use — all driven by canonical CSS custom properties.
+
+**`@lindaui/ui`** wraps HeroUI v3 and react-aria-components behind stable, per-component entry points. Each component exposes its own ergonomic API rather than leaking the underlying react-aria composition model, so your imports stay clean and your types stay predictable.
+
+**`@lindaui/blocks`** assembles UI primitives from `@lindaui/ui` into ready-to-use sections — authentication flows, master-detail panels, charts, and more. You import a block, wire up your data and handlers, and get a complete, accessible section in return.
+
+## Key features
+
+- **Accessible by default** — components are built on react-aria-components and meet WCAG 2.1 AA out of the box
+- **Brand tokens** — a single OKLCH teal palette drives every surface, border, and focus ring; override a handful of CSS variables to match your brand
+- **Composable blocks** — 22 pre-assembled sections reduce repetitive layout work without locking you into a framework
+- **TypeScript-first** — every package ships full type definitions; component APIs are stable and won't leak internal HeroUI types
+- **Mobile-first** — all components and blocks are responsive, tested at small viewports before large ones
+- **Dark mode ready** — add a `.dark` class to any ancestor element and the entire palette switches automatically
+
+## Packages
+
+<CardGroup cols={3}>
+  <Card title="@lindaui/tokens" icon="palette">
+    Brand CSS bundle — OKLCH teal tokens, HeroUI v3 base styles, and Tailwind v4 utilities. Import once at your app root: `import "@lindaui/tokens/css"`. No JavaScript, no configuration.
+  </Card>
+  <Card title="@lindaui/ui" icon="squares-2x2">
+    71 accessible React components — buttons, inputs, dialogs, selects, charts, and more. Each component lives at its own entry point, e.g. `import { Button } from "@lindaui/ui/button"`.
+  </Card>
+  <Card title="@lindaui/blocks" icon="rectangle-stack">
+    22 composed section blocks — login forms, auth layouts, list panes, detail panels, and chart dashboards. Import per block, e.g. `import { LoginForm } from "@lindaui/blocks/login-form"`.
+  </Card>
+</CardGroup>
+
+Ready to set everything up? Follow the [Quickstart](/quickstart) to have your first component rendering in under five minutes.

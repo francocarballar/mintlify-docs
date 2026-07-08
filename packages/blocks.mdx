@@ -1,0 +1,165 @@
+---
+title: "@lindaui/blocks: Composable Section Library Reference"
+sidebarTitle: "@lindaui/blocks"
+description: "22 controlled, mobile-first UI sections for auth, lists, master-detail layouts, charts, and overlays built on top of @lindaui/ui."
+---
+
+`@lindaui/blocks` is the higher-level layer of the Linda UI design system. It provides 22 fully composed UI sections — authentication forms, filterable list panes, master-detail layouts, confirmation dialogs, document readers, media viewers, chart blocks, and more — all built on `@lindaui/ui` primitives. Each block is an importable npm export, not a copy-paste snippet, and every block exposes its own flat controlled API: you provide the data and handlers, the block provides the layout, interaction, and visual polish.
+
+## Installation
+
+```bash
+pnpm add @lindaui/blocks @lindaui/ui @lindaui/tokens
+```
+
+Then import the CSS bundle once at your app root:
+
+```tsx
+import "@lindaui/tokens/css";
+```
+
+## Peer dependencies
+
+Your project must provide all of the following:
+
+| Package | Version |
+|---|---|
+| `react` | `>=19` |
+| `react-dom` | `>=19` |
+| `react-hook-form` | `>=7` |
+| `lucide-react` | `>=0.4` |
+| `recharts` | `>=3` (required only for chart blocks) |
+| `@lindaui/ui` | `>=0.2.0` |
+| `@lindaui/tokens` | `>=0.2.0` |
+
+---
+
+## Import convention
+
+One block per import path. There is no barrel export:
+
+```tsx
+import { LoginForm }     from "@lindaui/blocks/login-form";
+import { ListPane }      from "@lindaui/blocks/list-pane";
+import { ConfirmDialog } from "@lindaui/blocks/confirm-dialog";
+import { AreaChart }     from "@lindaui/blocks/area-chart";
+```
+
+---
+
+## Controlled block pattern
+
+Every block in this package is **fully controlled** — no block performs data fetching, routing, or session management internally. You own the state; the block owns the layout and UX.
+
+```tsx
+// You manage state and fetching
+const [search, setSearch] = useState("");
+const [filter, setFilter] = useState("all");
+const { data, isLoading, error } = usePatients({ search, filter });
+
+// The block receives state + handlers
+<ListPane
+  searchValue={search}
+  onSearchChange={setSearch}
+  activeFilter={filter}
+  onFilterChange={setFilter}
+  filters={[
+    { key: "all",      label: "All",      count: data?.total },
+    { key: "active",   label: "Active",   count: data?.active },
+    { key: "archived", label: "Archived", count: data?.archived },
+  ]}
+  loading={isLoading}
+  error={error?.message}
+  isEmpty={data?.items.length === 0}
+>
+  {data?.items.map((p) => <ListItem key={p.id} ... />)}
+</ListPane>
+```
+
+<Note>
+  Blocks do not filter data for you. Pass already-filtered data to `rows` or
+  `children`. Use `@lindaui/ui/search` (`matchesSearch`) to implement
+  accent-insensitive filtering in your own state management layer.
+</Note>
+
+---
+
+## Entry points
+
+### Auth & forms
+
+| Entry point | Description |
+|---|---|
+| `@lindaui/blocks/login-form` | Email/password login form. RHF handled internally. `onSubmit({ email, password })`, `loading`, `error`. Pass `bare` to drop the Card/title shell for embedding inside `auth-layout`. |
+| `@lindaui/blocks/auth-layout` | Split-screen authentication shell. Dark brand panel on desktop with slots for `logo`, `brandHeadline`, `brandFeatures`, `brandFooter`. `children` receives the form. Collapses to a single centered column when brand slots are empty. |
+| `@lindaui/blocks/auth-provider` | Context that holds `{ user }`. Wrap your app once; call `useAuth()` anywhere to read the current user. |
+| `@lindaui/blocks/field-array-form` | Repeatable rows form built with RHF `useFieldArray`. A select drives the field structure; rows can be added and removed. |
+
+### Lists & master-detail
+
+| Entry point | Description |
+|---|---|
+| `@lindaui/blocks/list-item` | Selectable list row. Controlled `selected` state + `onSelect`. |
+| `@lindaui/blocks/list-pane` | Filterable, searchable list shell with loading/empty/error states. Props: `filters`, `activeFilter`, `onFilterChange`, `searchValue`, `onSearchChange`, `loading`, `error`, `onRetry`, `isEmpty`, plus empty and error slot content. Items go in via `children`. |
+| `@lindaui/blocks/table-pane` | Tabular sibling of `list-pane`. Same filter/search/state chrome around a `@lindaui/ui/table`. Props: `columns: { key, label }[]`, `rows: Record<string, ReactNode>[]`, `toolbarExtra`, `footer`, `footerCount: { shown, total, label? }`. Does not filter — pass already-filtered rows. |
+| `@lindaui/blocks/detail-panel` | Master-detail right-side panel. Shows empty state, header, metadata card, and CTA. Fully controlled. |
+| `@lindaui/blocks/split-workspace` | Responsive two-column workspace: `media` on the left, `panel` on the right. Stacks on mobile (uses `useIsDesktop`). Props: `media`, `panel`, `overlay?`, `backHref?`, `backLabel?`, `back?`. Renders a legible back pill over dark media when `backHref` is provided. |
+| `@lindaui/blocks/workspace-back-button` | Standalone back pill link (`<a>`). Token-driven `bg-secondary`/`border-border` surface that reads over dark or bright media. `href`, `label`, optional `icon`. |
+
+### Dialogs & overlays
+
+| Entry point | Description |
+|---|---|
+| `@lindaui/blocks/confirm-dialog` | Confirmation dialog with optional destructive styling. Props: `open`, `onOpenChange`, `onConfirm`, `title`, `description`, `confirmLabel`, `cancelLabel`, `icon`, `destructive`, `identity: { name }`. `destructive` turns the confirm button and icon box red. |
+| `@lindaui/blocks/image-viewer` | Full-bleed media viewer with zoom. Uses the `--viewer-*` tokens for a permanently dark surface. |
+| `@lindaui/blocks/recording-overlay` | Voice-recording UI: microphone button, timer, waveform, stop, cancel, and error state. `variant: "overlay" \| "inline"`. `overlay` covers its container on a fixed dark viewer surface; `inline` fills its container and inherits the panel surface. |
+
+### Documents
+
+| Entry point | Description |
+|---|---|
+| `@lindaui/blocks/document-panel` | Document header + per-state body + footer shell. Props: `title`, `subtitle?`, `meta?`, `metaPlacement?: "block" \| "inline"`, `statusBadge?`, `state`, `emptyContent?`, `loadingLabel?`, `notices?`, `footer?`. `metaPlacement="inline"` flows subtitle and meta on one wrapping row instead of stacking. |
+| `@lindaui/blocks/document-reader` | Sectioned text/content reader with structured layout. |
+
+### Charts
+
+All chart blocks share a flat, consistent API. You provide the data, a config object mapping series keys to labels and colors, the key for the category axis, and the list of series to render. Colors flow through CSS variables injected by `ChartContainer` — dark mode comes free.
+
+```tsx
+import { AreaChart } from "@lindaui/blocks/area-chart";
+
+const data = [
+  { month: "Jan", revenue: 4000, costs: 2400 },
+  { month: "Feb", revenue: 3000, costs: 1398 },
+];
+
+const config = {
+  revenue: { label: "Revenue", color: "var(--chart-1)" },
+  costs:   { label: "Costs",   color: "var(--chart-2)" },
+};
+
+<AreaChart
+  data={data}
+  config={config}
+  categoryKey="month"
+  series={["revenue", "costs"]}
+/>
+```
+
+| Entry point | Description |
+|---|---|
+| `@lindaui/blocks/area-chart` | Area chart. `variant: "default" \| "stacked" \| "gradient"`. |
+| `@lindaui/blocks/bar-chart` | Bar chart. |
+| `@lindaui/blocks/line-chart` | Line chart. |
+| `@lindaui/blocks/pie-chart` | Pie chart. Uses `valueKey` and `nameKey` instead of `series`. |
+| `@lindaui/blocks/radar-chart` | Radar/spider chart. |
+| `@lindaui/blocks/radial-chart` | Radial bar chart. Uses `valueKey` and `nameKey` instead of `series`. |
+| `@lindaui/blocks/stat-card` | KPI stat card. `label`, `value`, `delta`, optional `sparkline`. |
+| `@lindaui/blocks/chart-card` | Card shell wrapping a chart with a consistent header and padding. |
+| `@lindaui/blocks/stats-grid` | Responsive grid of `stat-card` items for dashboard overviews. |
+
+<Tip>
+  Chart colors resolve at runtime from `var(--chart-1)` through `var(--chart-5)` defined
+  in `@lindaui/tokens`. You can pass any valid CSS color string in `config` — including
+  custom properties — and they will be injected as `--color-<key>` by `ChartContainer`.
+</Tip>

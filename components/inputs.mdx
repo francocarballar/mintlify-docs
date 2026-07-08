@@ -1,0 +1,403 @@
+---
+title: "Text Inputs, Textarea, and Search Fields"
+sidebarTitle: "Inputs"
+description: "Explore Linda UI's full suite of input components: Input, Textarea, NumberInput, SearchField, OtpInput, InputGroup, and the React Hook Form Field adapter."
+---
+
+Linda UI provides a cohesive family of input primitives — all built on React Aria Components and styled through CSS custom properties rather than class overrides. Whether you need a plain text field, a multiline textarea, a formatted number spinner, a search bar with a built-in clear button, a one-time-password box, or a way to wire any of these into React Hook Form, this page covers every pattern.
+
+<Note>
+  **No `className` on field components.** `Input`, `Textarea`, `NumberInput`, and `SearchField` intentionally reject the `className` prop — it is a TypeScript error by design. Passing a class to the outer wrapper would silently miss the inner `<input>` element. Style all fields by overriding the `--field-*` CSS custom properties instead:
+
+  | Variable | Controls |
+  |---|---|
+  | `--field-background` | Fill color of the input surface |
+  | `--field-foreground` | Text color |
+  | `--field-placeholder` | Placeholder text color |
+  | `--field-border` | Default border color |
+  | `--field-border-hover` | Border color on hover |
+  | `--field-border-focus` | Border color when focused |
+  | `--field-focus` | Focus ring color |
+  | `--field-radius` | Border radius |
+
+  A single set of overrides re-skins every field component at once, and dark mode follows automatically.
+</Note>
+
+---
+
+## Input
+
+The `Input` component wraps React Aria's `TextField`, `Label`, and the underlying `<input>` element into a single flat API.
+
+```tsx
+import { Input } from "@lindaui/ui/input";
+```
+
+### Basic usage
+
+```tsx
+<Input label="Email address" placeholder="you@example.com" />
+```
+
+### Controlled
+
+```tsx
+import { useState } from "react";
+import { Input } from "@lindaui/ui/input";
+
+export function EmailField() {
+  const [email, setEmail] = useState("");
+
+  return (
+    <Input
+      label="Email address"
+      type="email"
+      value={email}
+      onChange={setEmail}
+      isRequired
+    />
+  );
+}
+```
+
+### Validation state
+
+```tsx
+<Input
+  label="Username"
+  value={username}
+  onChange={setUsername}
+  isInvalid={username.length > 0 && username.length < 3}
+/>
+```
+
+### Props
+
+<ParamField path="label" type="ReactNode">
+  A visible label rendered above the field. Omit only when providing an `aria-label` through spread props.
+</ParamField>
+
+<ParamField path="placeholder" type="string">
+  Hint text displayed inside the field when it has no value. Does not substitute for a `label`.
+</ParamField>
+
+<ParamField path="value" type="string">
+  The current value in controlled mode. Pair with `onChange`.
+</ParamField>
+
+<ParamField path="onChange" type="(value: string) => void">
+  Called with the new string value on every keystroke.
+</ParamField>
+
+<ParamField path="type" type="string" default='"text"'>
+  The HTML input type — `"text"`, `"email"`, `"password"`, `"url"`, etc.
+</ParamField>
+
+<ParamField path="name" type="string">
+  The HTML `name` used for form serialization and accessibility associations.
+</ParamField>
+
+<ParamField path="isRequired" type="boolean" default="false">
+  Marks the field as required and communicates this to assistive technology.
+</ParamField>
+
+<ParamField path="isInvalid" type="boolean" default="false">
+  Applies error styles and sets `aria-invalid` on the input.
+</ParamField>
+
+---
+
+## Textarea
+
+`Textarea` shares the exact same flat API as `Input` but renders a multiline `<textarea>` element underneath.
+
+```tsx
+import { Textarea } from "@lindaui/ui/textarea";
+```
+
+```tsx
+<Textarea
+  label="Message"
+  placeholder="Write something..."
+  value={message}
+  onChange={setMessage}
+  isRequired
+/>
+```
+
+The same `--field-*` CSS custom properties that style `Input` apply here, so a single theme token set covers both components.
+
+### Props
+
+`Textarea` accepts the same props as `Input` (`label`, `placeholder`, `value`, `onChange`, `isInvalid`, `isRequired`, `name`). There is no `type` prop.
+
+---
+
+## NumberInput
+
+`NumberInput` wraps React Aria's `NumberField` and provides increment/decrement controls alongside the raw number value.
+
+```tsx
+import { NumberInput } from "@lindaui/ui/number-input";
+```
+
+```tsx
+import { useState } from "react";
+import { NumberInput } from "@lindaui/ui/number-input";
+
+export function QuantityPicker() {
+  const [qty, setQty] = useState(1);
+
+  return (
+    <NumberInput
+      label="Quantity"
+      value={qty}
+      onChange={setQty}
+      minValue={1}
+      maxValue={99}
+      step={1}
+    />
+  );
+}
+```
+
+### Formatted currency example
+
+Use `formatOptions` to drive the built-in `Intl.NumberFormat` formatter:
+
+```tsx
+<NumberInput
+  label="Price"
+  value={price}
+  onChange={setPrice}
+  minValue={0}
+  formatOptions={{ style: "currency", currency: "USD" }}
+/>
+```
+
+### Props
+
+<ParamField path="label" type="ReactNode">
+  Visible label rendered above the field.
+</ParamField>
+
+<ParamField path="value" type="number">
+  The current number value in controlled mode.
+</ParamField>
+
+<ParamField path="onChange" type="(value: number) => void">
+  Called with the new numeric value. Note the argument type is `number`, not `string`.
+</ParamField>
+
+<ParamField path="minValue" type="number">
+  The minimum allowed value. The decrement button is disabled when the current value equals this.
+</ParamField>
+
+<ParamField path="maxValue" type="number">
+  The maximum allowed value. The increment button is disabled when the current value equals this.
+</ParamField>
+
+<ParamField path="step" type="number" default="1">
+  How much each increment/decrement changes the value.
+</ParamField>
+
+<ParamField path="formatOptions" type="Intl.NumberFormatOptions">
+  Options forwarded to `Intl.NumberFormat` for display formatting. Supports `style`, `currency`, `minimumFractionDigits`, and all other standard options.
+</ParamField>
+
+---
+
+## SearchField
+
+`SearchField` bundles a magnifier icon and a clear button into a ready-to-use search bar. You supply the filtering logic; the component handles the chrome.
+
+```tsx
+import { SearchField } from "@lindaui/ui/search-field";
+```
+
+```tsx
+import { useState } from "react";
+import { SearchField } from "@lindaui/ui/search-field";
+
+export function ProductSearch() {
+  const [query, setQuery] = useState("");
+
+  return (
+    <SearchField
+      label="Search products"
+      placeholder="Type to filter…"
+      value={query}
+      onChange={setQuery}
+    />
+  );
+}
+```
+
+The clear button appears automatically as soon as the field has a value. Pressing it resets the value and calls `onChange("")`.
+
+<Tip>
+  Pair `SearchField` with `matchesSearch` from `@lindaui/ui/search` for accent- and case-insensitive filtering: `items.filter(item => matchesSearch(item.name, query))`.
+</Tip>
+
+### Props
+
+<ParamField path="label" type="ReactNode">
+  Visible label above the search field. Omit and pass `aria-label` through spread props if you want a label-less compact search bar.
+</ParamField>
+
+<ParamField path="placeholder" type="string">
+  Hint text shown when the field is empty.
+</ParamField>
+
+<ParamField path="value" type="string">
+  The current search string in controlled mode.
+</ParamField>
+
+<ParamField path="onChange" type="(value: string) => void">
+  Called with the new search string on every keystroke and when the clear button is pressed.
+</ParamField>
+
+---
+
+## OtpInput
+
+`OtpInput` renders a one-time-password entry field with individually focused character slots.
+
+```tsx
+import { OtpInput } from "@lindaui/ui/otp-input";
+```
+
+```tsx
+import { useState } from "react";
+import { OtpInput } from "@lindaui/ui/otp-input";
+
+export function VerifyCode() {
+  const [code, setCode] = useState("");
+
+  return (
+    <OtpInput
+      maxLength={6}
+      onChange={setCode}
+    />
+  );
+}
+```
+
+### Props
+
+<ParamField path="maxLength" type="number">
+  The number of character slots to render. Set this to match your OTP length — typically `4` or `6`.
+</ParamField>
+
+<ParamField path="onChange" type="(value: string) => void">
+  Called with the full OTP string each time the user types or pastes a character.
+</ParamField>
+
+---
+
+## InputGroup
+
+`InputGroup` is a layout-only wrapper that visually groups an input with one or more leading or trailing addons — icons, labels, currency symbols, action buttons, and so on.
+
+```tsx
+import { InputGroup } from "@lindaui/ui/input-group";
+import { Input } from "@lindaui/ui/input";
+```
+
+```tsx
+<InputGroup>
+  <span aria-hidden>https://</span>
+  <Input label="Website URL" placeholder="example.com" name="url" />
+</InputGroup>
+```
+
+`InputGroup` does not manage state — it purely handles the visual composition. Any state management lives in the child input.
+
+---
+
+## Field — React Hook Form adapter
+
+When you use React Hook Form, the `Field` component bridges the gap between RHF's `control` object and any Linda UI input. It renders a label, a hint, and — when validation fails — the RHF error message automatically.
+
+```tsx
+import { Field } from "@lindaui/ui/field";
+import { Input } from "@lindaui/ui/input";
+```
+
+### Usage
+
+<Steps>
+  <Step title="Set up your form">
+    Create a form with `useForm` as usual.
+
+    ```tsx
+    import { useForm } from "react-hook-form";
+
+    const { control, handleSubmit } = useForm<{ email: string }>();
+    ```
+  </Step>
+
+  <Step title="Wrap the input in Field">
+    Pass `control`, `name`, an optional `label`, and an optional `hint`. The render prop receives `{ field, invalid }`.
+
+    ```tsx
+    import { Field } from "@lindaui/ui/field";
+    import { Input } from "@lindaui/ui/input";
+
+    <Field
+      control={control}
+      name="email"
+      label="Email address"
+      hint="We'll never share your email."
+    >
+      {({ field, invalid }) => (
+        <Input
+          {...field}
+          type="email"
+          isInvalid={invalid}
+          placeholder="you@example.com"
+        />
+      )}
+    </Field>
+    ```
+  </Step>
+
+  <Step title="Add validation rules">
+    Pass `rules` to the underlying `Controller` through `Field`, or use a schema resolver on `useForm`. The error message from RHF replaces the `hint` text when validation fails.
+
+    ```tsx
+    <Field
+      control={control}
+      name="email"
+      label="Email address"
+      hint="We'll never share your email."
+    >
+      {({ field, invalid }) => (
+        <Input {...field} type="email" isInvalid={invalid} />
+      )}
+    </Field>
+    ```
+  </Step>
+</Steps>
+
+### Props
+
+<ParamField path="control" type="Control<TFieldValues>">
+  The `control` object returned by `useForm`. Required.
+</ParamField>
+
+<ParamField path="name" type="FieldPath<TFieldValues>">
+  The dot-path to the field in your form schema. Required.
+</ParamField>
+
+<ParamField path="label" type="ReactNode">
+  An optional label rendered above the input.
+</ParamField>
+
+<ParamField path="hint" type="ReactNode">
+  Helper text shown below the input when there is no validation error. Hidden and replaced by the RHF error message when the field is invalid.
+</ParamField>
+
+<ParamField path="children" type="(args: { field: ControllerRenderProps, invalid: boolean }) => ReactNode">
+  Render prop that receives the RHF `field` object (spread onto your input) and an `invalid` boolean flag.
+</ParamField>

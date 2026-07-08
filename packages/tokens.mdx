@@ -1,0 +1,241 @@
+---
+title: "@lindaui/tokens: Brand CSS Bundle Reference"
+sidebarTitle: "@lindaui/tokens"
+description: "Single CSS bundle combining HeroUI v3 styles, OKLCH teal brand tokens, and Tailwind v4 utilities — CSS only, no JavaScript exports."
+---
+
+`@lindaui/tokens` is the CSS foundation for the entire Linda UI design system. A single prebuilt stylesheet bundles three things together: the HeroUI v3 component styles (so HeroUI primitives render correctly out of the box), a set of semantic OKLCH color tokens for both light and dark modes (teal-700 as the primary brand color), and the Tailwind v4 utility classes that `@lindaui/ui` and `@lindaui/blocks` emit. The package has no JavaScript entry point — it is CSS only.
+
+## Installation
+
+```bash
+pnpm add @lindaui/tokens
+```
+
+Then import the compiled stylesheet once at your app root — typically in your root layout or entry file:
+
+```tsx
+import "@lindaui/tokens/css";
+```
+
+<Warning>
+  If your app renders unstyled (just plain text with no colors, spacing, or
+  component shapes), you have most likely forgotten this import. It must appear
+  before any Linda UI component renders.
+</Warning>
+
+---
+
+## Exports
+
+The package exposes three CSS paths and no JavaScript:
+
+| Export path | File | When to use |
+|---|---|---|
+| `@lindaui/tokens/css` | `dist/index.css` | **Always** — the compiled bundle every consumer imports at runtime. |
+| `@lindaui/tokens/theme.css` | `src/theme.css` | Only when you run your own Tailwind build pass and need the `@theme inline` block to resolve custom utility classes there too. Normal consumers never import this. |
+| `@lindaui/tokens/theme-template.css` | `theme-template.css` | A commented starting point you copy into your project to create a custom theme. Never imported directly — copy and edit it. |
+
+---
+
+## CSS custom properties
+
+All semantic tokens live under `:root` (light mode). The `.dark` class on any ancestor element switches to the dark set. Override only the **canonical** variables listed below — the HeroUI variables and Tailwind utility mappings reference them at runtime, so everything follows without a rebuild.
+
+### Surfaces and text
+
+```css
+--background          /* Page/app background */
+--foreground          /* Primary text color */
+--card                /* Card surface */
+--card-foreground     /* Text on cards */
+--popover             /* Popover/dropdown surface */
+--popover-foreground  /* Text in popovers */
+--secondary           /* Neutral surface (buttons, chips) */
+--secondary-foreground
+--muted-foreground    /* Dimmed/secondary text (captions, descriptions) */
+```
+
+### Brand
+
+```css
+--primary             /* oklch(0.47 0.097 183) — teal-700 in light mode */
+--primary-foreground  /* Text on primary surfaces */
+```
+
+### State colors
+
+```css
+--destructive         /* Error/delete actions */
+--success             /* Positive/confirmed state */
+--success-foreground
+--warning             /* Caution state */
+--warning-foreground
+```
+
+### Borders, inputs, and focus
+
+```css
+--border   /* Default border color */
+--input    /* Input field border */
+--ring     /* Focus ring — matches --primary */
+--radius   /* Base border-radius: 0.625rem */
+```
+
+### Viewer tokens
+
+These tokens define a dark viewer surface that stays dark in both light and dark mode (useful for PACS or image viewers):
+
+```css
+--viewer-bg          /* Dark background for media viewers */
+--viewer-foreground  /* Text/icon color over the viewer */
+--viewer-border      /* Border color inside the viewer */
+```
+
+### Chart color tokens
+
+Five categorical chart colors anchored to the brand teal palette. Use them for data visualization or pass them to `ChartConfig`:
+
+```css
+--chart-1   /* teal (brand) */
+--chart-2   /* blue */
+--chart-3   /* green */
+--chart-4   /* amber */
+--chart-5   /* coral */
+```
+
+In dark mode these shift to higher-lightness variants for contrast against the dark background.
+
+---
+
+## Tailwind utility classes
+
+The `@theme inline` block maps every canonical token to a `--color-*` variable, which Tailwind v4 reads to generate `bg-*`, `text-*`, and `border-*` classes. You do not need to configure anything — the classes are available as soon as you import `@lindaui/tokens/css`.
+
+```tsx
+// All of these work out of the box
+<div className="bg-primary text-primary-foreground" />
+<p className="text-muted-foreground" />
+<div className="bg-card border-border" />
+<div className="bg-chart-1" />
+<div className="bg-viewer-bg text-viewer-foreground" />
+```
+
+A radius scale is also included:
+
+```css
+--radius-sm   /* calc(var(--radius) * 0.6) */
+--radius-md   /* calc(var(--radius) * 0.8) */
+--radius-lg   /* var(--radius)             */
+--radius-xl   /* calc(var(--radius) * 1.4) */
+--radius-2xl  /* calc(var(--radius) * 1.8) */
+--radius-3xl  /* calc(var(--radius) * 2.2) */
+--radius-4xl  /* calc(var(--radius) * 2.6) */
+```
+
+---
+
+## Animation utility classes
+
+Three keyframe animations are defined for use in overlays and recording UI. They are not Tailwind utilities — they are literal CSS class names you apply directly:
+
+| Class | Behavior |
+|---|---|
+| `ti-rec-pulse` | Pulsing scale + fade out (1.8s, infinite) — for recording indicator rings |
+| `ti-rec-blink` | Opacity blink between 1 and 0.25 (1.2s, infinite) — for a blinking dot |
+| `ti-fade` | Single fade-in on mount (0.25s, `animation-fill-mode: both`) |
+
+```tsx
+// Recording dot indicator
+<span className="ti-rec-blink inline-block h-2 w-2 rounded-full bg-destructive" />
+
+// Pulsing ring behind the dot
+<span className="ti-rec-pulse absolute inset-0 rounded-full bg-destructive" />
+
+// Fade in a newly mounted panel
+<div className="ti-fade">...</div>
+```
+
+<Note>
+  `@lindaui/blocks/recording-overlay` depends on these class names. If the
+  recording overlay renders without animation (static layout, no movement),
+  check that `@lindaui/tokens/css` is imported before the component mounts.
+</Note>
+
+---
+
+## Dark mode
+
+Toggle the `.dark` class on any ancestor element to activate dark tokens. You can scope dark mode to a single subtree rather than the whole page:
+
+```tsx
+// Whole-page dark mode (typical)
+<html className={isDark ? "dark" : ""}>
+
+// Subtree dark mode (e.g. a sidebar that is always dark)
+<aside className="dark bg-background text-foreground">
+  ...
+</aside>
+```
+
+Only the canonical tokens (A) are redefined in `.dark`. The HeroUI reference variables and Tailwind utility mappings update automatically because they reference the canonical vars.
+
+---
+
+## Custom theming
+
+To apply your own brand, override the canonical variables after the base import:
+
+```tsx
+// app root
+import "@lindaui/tokens/css";   // Linda UI defaults (teal)
+import "./theme.css";            // Your brand — wins by source order
+```
+
+```css
+/* theme.css */
+:root {
+  --primary: oklch(0.55 0.2 264);
+  --primary-foreground: oklch(0.98 0 0);
+  --ring: oklch(0.55 0.2 264);
+  --radius: 0.5rem;
+}
+.dark {
+  --primary: oklch(0.72 0.16 264);
+  --primary-foreground: oklch(0.2 0 0);
+  --ring: oklch(0.72 0.16 264);
+}
+```
+
+A fully commented template is available at `@lindaui/tokens/theme-template.css`. Locate it with:
+
+```ts
+const path = require.resolve("@lindaui/tokens/theme-template.css");
+```
+
+### Runtime-switchable themes
+
+For multiple themes in a single app, scope each theme under a data attribute selector instead of `:root`:
+
+```css
+[data-theme="ocean"]      { --primary: oklch(0.55 0.13 240); }
+[data-theme="ocean"].dark { --primary: oklch(0.78 0.12 240); }
+```
+
+```ts
+document.documentElement.dataset.theme = "ocean";
+```
+
+---
+
+## Base font size
+
+The stylesheet sets a base font size of 18 px on `<html>`:
+
+```css
+html {
+  font-size: 18px;
+}
+```
+
+This means all `rem` values in the design system scale relative to 18 px rather than the browser default of 16 px. This is intentional for accessibility in clinical interfaces.

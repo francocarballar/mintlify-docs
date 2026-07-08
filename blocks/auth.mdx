@@ -1,0 +1,375 @@
+---
+title: "Auth Blocks: Login Form and Authentication Layout"
+sidebarTitle: "Auth"
+description: "Build complete authentication flows with LoginForm, AuthLayout, AuthProvider, and FieldArrayForm—all fully controlled."
+---
+
+The auth blocks give you everything you need to build a polished sign-in experience: a
+form that handles React Hook Form internally, a split-screen shell that adapts from
+mobile to desktop, a context provider that makes the current user available anywhere in
+your tree, and a repeatable key/value form for structured data entry.
+
+## LoginForm
+
+`LoginForm` renders email and password fields backed by React Hook Form. Your `onSubmit`
+handler receives the validated `{ email, password }` values—you never touch the form
+state yourself.
+
+```tsx
+import { LoginForm } from "@lindaui/blocks/login-form";
+
+export default function SignInPage() {
+  return (
+    <LoginForm
+      onSubmit={async ({ email, password }) => {
+        await signIn(email, password);
+      }}
+    />
+  );
+}
+```
+
+### Props
+
+<ParamField path="onSubmit" type="(values: { email: string; password: string }) => void | Promise<void>" required>
+  Called with the validated form values when the user submits. React Hook Form
+  is managed internally—you receive plain values.
+</ParamField>
+
+<ParamField path="title" type="string" default='"Iniciar sesión"'>
+  Heading rendered inside the Card. Ignored when `bare` is `true`.
+</ParamField>
+
+<ParamField path="emailLabel" type="string" default='"Email"'>
+  Label for the email field.
+</ParamField>
+
+<ParamField path="passwordLabel" type="string" default='"Contraseña"'>
+  Label for the password field.
+</ParamField>
+
+<ParamField path="submitLabel" type="string" default='"Ingresar"'>
+  Text on the submit button.
+</ParamField>
+
+<ParamField path="loading" type="boolean" default="false">
+  Disables the submit button while an async operation is in progress.
+</ParamField>
+
+<ParamField path="error" type="string">
+  An error message to display below the fields (e.g. "Invalid credentials").
+  Rendered with `role="alert"` for screen readers.
+</ParamField>
+
+<ParamField path="bare" type="boolean" default="false">
+  Strips the Card wrapper and title. Use this when embedding `LoginForm`
+  inside `AuthLayout` or another shell that already provides the heading and
+  container.
+</ParamField>
+
+<ParamField path="className" type="string">
+  Additional CSS classes forwarded to the root element.
+</ParamField>
+
+### Bare mode
+
+When `bare={true}`, the Card and title are removed. The fields stack vertically with a
+full-width submit button, ready to slot into any containing shell:
+
+```tsx
+import { LoginForm } from "@lindaui/blocks/login-form";
+
+// Embed inside AuthLayout—no duplicate Card or heading
+<LoginForm
+  bare
+  onSubmit={handleSubmit}
+  loading={isPending}
+  error={errorMessage}
+/>
+```
+
+---
+
+## AuthLayout
+
+`AuthLayout` is a split-screen authentication shell. On desktop it renders a dark branded
+panel on the left and a centered form column on the right. On mobile it stacks to a
+single column and hides the brand panel, showing a compact logo instead.
+
+If you omit all brand props (`brandHeadline`, `brandDescription`, `brandFeatures`,
+`brandFooter`), the brand panel is suppressed entirely and the layout renders as a
+single centered column at all breakpoints.
+
+```tsx
+import { AuthLayout } from "@lindaui/blocks/auth-layout";
+import { LoginForm }  from "@lindaui/blocks/login-form";
+import { ShieldCheck } from "lucide-react";
+
+export default function SignInPage() {
+  return (
+    <AuthLayout
+      logo={<Logo />}
+      brandHeadline="Secure access to your workspace"
+      brandDescription="All data is encrypted in transit and at rest."
+      brandFeatures={[
+        { icon: <ShieldCheck size={15} />, label: "SOC 2 Type II" },
+        { icon: <ShieldCheck size={15} />, label: "GDPR compliant" },
+      ]}
+      brandFooter="© 2025 Acme Corp. All rights reserved."
+      title="Sign in"
+      description="Enter your credentials to continue."
+      footer={<span>Protected by reCAPTCHA</span>}
+    >
+      <LoginForm bare onSubmit={handleSubmit} />
+    </AuthLayout>
+  );
+}
+```
+
+### Props
+
+<ParamField path="title" type="ReactNode" required>
+  Main heading in the form panel.
+</ParamField>
+
+<ParamField path="children" type="ReactNode" required>
+  The form or other auth content rendered inside the form panel.
+</ParamField>
+
+<ParamField path="logo" type="ReactNode">
+  Logo shown in the brand panel (desktop). Also used as the fallback compact
+  logo in the form panel if `compactLogo` is not provided.
+</ParamField>
+
+<ParamField path="compactLogo" type="ReactNode">
+  Logo shown in the form panel (mobile, or always when there is no brand
+  panel). Defaults to `logo` if not set.
+</ParamField>
+
+<ParamField path="brandHeadline" type="ReactNode">
+  Large headline in the dark brand panel. Providing at least one brand prop
+  enables the brand panel.
+</ParamField>
+
+<ParamField path="brandDescription" type="ReactNode">
+  Smaller descriptive text below the headline.
+</ParamField>
+
+<ParamField path="brandFeatures" type="{ icon?: ReactNode; label: string }[]">
+  A horizontal list of feature callouts rendered below the description.
+</ParamField>
+
+<ParamField path="brandFooter" type="ReactNode">
+  Fine-print text pinned to the bottom of the brand panel (e.g. copyright).
+</ParamField>
+
+<ParamField path="description" type="ReactNode">
+  Subtitle text in the form panel, rendered below the title.
+</ParamField>
+
+<ParamField path="footer" type="ReactNode">
+  Footer content in the form panel, centered below the form (e.g. a
+  security notice or a link to the privacy policy).
+</ParamField>
+
+### Without brand panel
+
+Omit all brand props to get a minimal single-column centered layout:
+
+```tsx
+<AuthLayout title="Reset your password" description="We'll send you a link.">
+  <ResetPasswordForm onSubmit={handleReset} />
+</AuthLayout>
+```
+
+---
+
+## AuthProvider and useAuth
+
+`AuthProvider` is a React context provider that makes the current user available
+anywhere in your component tree via the `useAuth()` hook. Wrap your application (or
+the relevant subtree) once at the root:
+
+```tsx
+import { AuthProvider } from "@lindaui/blocks/auth-provider";
+
+export default function RootLayout({ children }: { children: React.ReactNode }) {
+  // `user` comes from your session layer (server component, cookie, etc.)
+  return (
+    <AuthProvider user={currentUser}>
+      {children}
+    </AuthProvider>
+  );
+}
+```
+
+Then read the user in any client component without prop-drilling:
+
+```tsx
+import { useAuth } from "@lindaui/blocks/auth-provider";
+
+function UserGreeting() {
+  const { user } = useAuth();
+  if (!user) return null;
+  return <span>Hello, {user.name}</span>;
+}
+```
+
+### AuthUser shape
+
+`AuthUser` is an open interface—add any fields you need:
+
+```tsx
+interface AuthUser {
+  name?: string;
+  [key: string]: unknown; // extend freely
+}
+```
+
+<Note>
+  `useAuth()` returns `{ user: AuthUser | null }`. The user is `null` when no
+  `AuthProvider` is in the tree or when the passed `user` prop is `null`.
+</Note>
+
+---
+
+## FieldArrayForm
+
+`FieldArrayForm` renders a category select plus a name input and a repeatable
+key/value entry list. Rows are managed with React Hook Form's `useFieldArray`
+internally—you receive the complete `{ category, name, entries }` values on submit.
+
+```tsx
+import { FieldArrayForm } from "@lindaui/blocks/field-array-form";
+
+const categoryOptions = [
+  { value: "metadata", label: "Metadata" },
+  { value: "headers",  label: "HTTP Headers" },
+];
+
+<FieldArrayForm
+  options={categoryOptions}
+  onSubmit={(values) => console.log(values)}
+  categoryLabel="Type"
+  nameLabel="Config name"
+  entriesLabel="Key/Value pairs"
+  addLabel="Add pair"
+  submitLabel="Save"
+  emptyHint="No entries yet. Click 'Add pair' to start."
+/>
+```
+
+### Props
+
+<ParamField path="onSubmit" type="(values: FieldArrayFormValues) => void | Promise<void>" required>
+  Receives `{ category: string, name: string, entries: { key: string, value: string }[] }`.
+</ParamField>
+
+<ParamField path="options" type="{ value: string; label: string }[]" required>
+  Items for the category select.
+</ParamField>
+
+<ParamField path="categoryLabel" type="string" default='"Categoría"'>
+  Label for the category select.
+</ParamField>
+
+<ParamField path="nameLabel" type="string" default='"Nombre"'>
+  Label for the name input.
+</ParamField>
+
+<ParamField path="namePlaceholder" type="string">
+  Placeholder text for the name input.
+</ParamField>
+
+<ParamField path="entriesLabel" type="string" default='"Entradas"'>
+  Section heading above the repeatable rows.
+</ParamField>
+
+<ParamField path="addLabel" type="string" default='"Agregar entrada"'>
+  Label for the add-row button.
+</ParamField>
+
+<ParamField path="removeLabel" type="string" default='"Eliminar entrada"'>
+  Accessible label for each row's remove button.
+</ParamField>
+
+<ParamField path="keyPlaceholder" type="string" default='"Clave"'>
+  Placeholder for each row's key input.
+</ParamField>
+
+<ParamField path="valuePlaceholder" type="string" default='"Valor"'>
+  Placeholder for each row's value input.
+</ParamField>
+
+<ParamField path="emptyHint" type="ReactNode">
+  Content shown when there are no rows yet.
+</ParamField>
+
+<ParamField path="submitLabel" type="string" default='"Guardar"'>
+  Label for the submit button.
+</ParamField>
+
+<ParamField path="loading" type="boolean" default="false">
+  Disables the submit button during async submission.
+</ParamField>
+
+<ParamField path="defaultValues" type="Partial<FieldArrayFormValues>">
+  Pre-populate the form fields.
+</ParamField>
+
+---
+
+## Complete example: AuthLayout + LoginForm + AuthProvider
+
+The following shows how to combine all three auth blocks into a complete sign-in flow:
+
+```tsx
+import { AuthProvider }  from "@lindaui/blocks/auth-provider";
+import { AuthLayout }    from "@lindaui/blocks/auth-layout";
+import { LoginForm }     from "@lindaui/blocks/login-form";
+import { useState }      from "react";
+
+function SignInPage() {
+  const [loading, setLoading]   = useState(false);
+  const [error,   setError]     = useState<string | undefined>();
+
+  async function handleSubmit({ email, password }: { email: string; password: string }) {
+    setLoading(true);
+    setError(undefined);
+    try {
+      await signIn(email, password);
+    } catch {
+      setError("Invalid email or password. Please try again.");
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  return (
+    <AuthLayout
+      logo={<AppLogo />}
+      brandHeadline="Welcome back"
+      brandDescription="Sign in to manage your projects."
+      title="Sign in to Acme"
+      description="Use your work email to continue."
+    >
+      <LoginForm
+        bare
+        onSubmit={handleSubmit}
+        loading={loading}
+        error={error}
+        submitLabel="Sign in"
+      />
+    </AuthLayout>
+  );
+}
+
+// Wrap the page in AuthProvider to make user available app-wide
+export default function App() {
+  return (
+    <AuthProvider user={null}>
+      <SignInPage />
+    </AuthProvider>
+  );
+}
+```

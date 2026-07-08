@@ -1,0 +1,276 @@
+---
+title: "Document Panel and Reader Blocks"
+sidebarTitle: "Documents"
+description: "Controlled document panel with loading, empty, and ready states, plus a sectioned text reader for structured document content."
+---
+
+The document blocks handle the presentation layer for document-centric interfaces.
+`DocumentPanel` is a fully controlled panel with a header, status badge, and a
+three-state body (loading, empty, ready). `DocumentReader` takes a plain text string
+and renders it as a series of titled sections. Neither block fetches data—you drive
+state from outside.
+
+---
+
+## DocumentPanel
+
+`DocumentPanel` renders a structured panel with a sticky header containing the document
+title, optional subtitle and metadata, and an optional status badge. The body switches
+between three states controlled by the `state` prop: `"loading"` shows skeleton lines,
+`"empty"` renders your custom empty content, and `"ready"` renders notices followed by
+`children`. An optional footer slot with a divider sits at the bottom.
+
+```tsx
+import { DocumentPanel } from "@lindaui/blocks/document-panel";
+import { Badge }         from "@lindaui/ui/badge";
+import { DocumentReader } from "@lindaui/blocks/document-reader";
+
+<DocumentPanel
+  title="Service Agreement"
+  subtitle="Acme Corp — Client Contract"
+  meta="Uploaded 12 Jan 2025"
+  statusBadge={<Badge variant="success">Signed</Badge>}
+  state={documentState}
+  loadingLabel="Loading document…"
+  emptyContent={
+    <div className="py-16 text-center text-sm text-muted-foreground">
+      No document selected.
+    </div>
+  }
+  notices={
+    <div className="mb-4 rounded-lg bg-warning/10 p-3 text-sm text-warning">
+      This document expires in 30 days.
+    </div>
+  }
+  footer={
+    <button onClick={handleSign} className="btn-primary">
+      Sign document
+    </button>
+  }
+>
+  <DocumentReader content={document.text} />
+</DocumentPanel>
+```
+
+### Controlling state
+
+The `state` prop is the primary switch for the panel body. Set it based on your data
+lifecycle:
+
+```tsx
+const [documentState, setDocumentState] = useState<"loading" | "empty" | "ready">("loading");
+
+useEffect(() => {
+  fetchDocument(id)
+    .then((doc) => {
+      setDocument(doc);
+      setDocumentState(doc ? "ready" : "empty");
+    })
+    .catch(() => setDocumentState("empty"));
+}, [id]);
+
+<DocumentPanel
+  title={document?.title ?? "Document"}
+  state={documentState}
+  emptyContent={<EmptyState />}
+>
+  {document && <DocumentReader content={document.body} />}
+</DocumentPanel>
+```
+
+### Props
+
+<ParamField path="title" type="string" required>
+  Document title rendered as the panel heading.
+</ParamField>
+
+<ParamField path="state" type='"empty" | "loading" | "ready"' required>
+  Controls which body content is rendered. `loading` shows skeleton lines.
+  `empty` renders `emptyContent`. `ready` renders `notices` followed by
+  `children`.
+</ParamField>
+
+<ParamField path="subtitle" type="ReactNode">
+  Secondary line below the title in the header.
+</ParamField>
+
+<ParamField path="meta" type="ReactNode">
+  Tertiary metadata below subtitle (e.g. a date string). Rendered in
+  tabular-nums for number alignment.
+</ParamField>
+
+<ParamField path="metaPlacement" type='"block" | "inline"' default='"block"'>
+  Controls how subtitle and meta are laid out in the header. `block` stacks
+  them on separate lines. `inline` flows them on one wrapping row as
+  `subtitle · meta`, ideal when a date should sit next to the subtitle.
+</ParamField>
+
+<ParamField path="statusBadge" type="ReactNode">
+  Badge pinned to the top-right of the header (e.g. a signed/pending
+  status badge).
+</ParamField>
+
+<ParamField path="emptyContent" type="ReactNode">
+  Content rendered when `state="empty"`.
+</ParamField>
+
+<ParamField path="loadingLabel" type="string" default='"Cargando…"'>
+  Accessible label shown above the skeleton lines when `state="loading"`.
+</ParamField>
+
+<ParamField path="notices" type="ReactNode">
+  Content rendered at the top of the body when `state="ready"` (e.g. an
+  expiry warning banner). Rendered before `children`.
+</ParamField>
+
+<ParamField path="children" type="ReactNode">
+  Main body content shown when `state="ready"`. Typically a
+  `DocumentReader` or rich text renderer.
+</ParamField>
+
+<ParamField path="footer" type="ReactNode">
+  Content rendered in a divider-separated footer area (e.g. action buttons).
+  The footer is always visible regardless of `state`.
+</ParamField>
+
+### metaPlacement: inline
+
+Use `metaPlacement="inline"` when you want the subtitle and a date to share a row
+instead of stacking:
+
+```tsx
+// Renders: "Acme Corp — Client Contract · 12 Jan 2025"
+<DocumentPanel
+  title="Service Agreement"
+  subtitle="Acme Corp — Client Contract"
+  meta="12 Jan 2025"
+  metaPlacement="inline"
+  state="ready"
+>
+  <DocumentReader content={text} />
+</DocumentPanel>
+```
+
+### With statusBadge
+
+The `statusBadge` slot is pinned to the top-right of the header and does not affect the
+title/subtitle layout:
+
+```tsx
+<DocumentPanel
+  title="NDA — Vendor Agreement"
+  statusBadge={<Badge variant="warning">Pending review</Badge>}
+  state="ready"
+>
+  <DocumentReader content={text} />
+</DocumentPanel>
+```
+
+---
+
+## DocumentReader
+
+`DocumentReader` takes a single `content` string and renders it as a list of titled
+sections. It splits on blank lines: the first line of each block becomes an uppercase
+section heading, and the remaining lines become body paragraph text.
+
+```tsx
+import { DocumentReader } from "@lindaui/blocks/document-reader";
+
+const contractText = `
+PARTIES
+This agreement is entered into between Acme Corp ("Provider") and Widget Inc ("Client").
+
+SCOPE OF SERVICES
+Provider agrees to deliver software development services as described in Schedule A.
+
+PAYMENT TERMS
+Client shall pay the monthly fee of $5,000 within 15 days of each invoice date.
+
+TERM
+This agreement commences on 1 February 2025 and continues for 12 months.
+`;
+
+<DocumentReader content={contractText} />
+```
+
+The component parses the string at render time—there is no state. Pass a different
+`content` string to re-render different sections.
+
+### Props
+
+<ParamField path="content" type="string" required>
+  Plain text string. Blank lines delimit sections. Within each section, the
+  first line is the heading and subsequent lines form the body text.
+</ParamField>
+
+### Typical usage inside DocumentPanel
+
+Combining both blocks gives you a complete, state-managed document viewer:
+
+```tsx
+import { DocumentPanel }  from "@lindaui/blocks/document-panel";
+import { DocumentReader } from "@lindaui/blocks/document-reader";
+import { Badge }          from "@lindaui/ui/badge";
+import { useState, useEffect } from "react";
+
+interface Doc {
+  title: string;
+  subtitle: string;
+  uploadedAt: string;
+  status: "pending" | "signed" | "expired";
+  body: string;
+}
+
+export function DocumentViewer({ docId }: { docId: string | null }) {
+  const [state, setState] = useState<"empty" | "loading" | "ready">("empty");
+  const [doc, setDoc] = useState<Doc | null>(null);
+
+  useEffect(() => {
+    if (!docId) { setState("empty"); return; }
+    setState("loading");
+    fetchDoc(docId).then((d) => {
+      setDoc(d);
+      setState("ready");
+    });
+  }, [docId]);
+
+  const badgeVariant = {
+    pending:  "warning",
+    signed:   "success",
+    expired:  "danger",
+  } as const;
+
+  return (
+    <DocumentPanel
+      title={doc?.title ?? "Document"}
+      subtitle={doc?.subtitle}
+      meta={doc?.uploadedAt}
+      metaPlacement="inline"
+      statusBadge={
+        doc && (
+          <Badge variant={badgeVariant[doc.status]}>
+            {doc.status.charAt(0).toUpperCase() + doc.status.slice(1)}
+          </Badge>
+        )
+      }
+      state={state}
+      loadingLabel="Loading document…"
+      emptyContent={
+        <p className="py-16 text-center text-sm text-muted-foreground">
+          Select a document to view its contents.
+        </p>
+      }
+    >
+      {doc && <DocumentReader content={doc.body} />}
+    </DocumentPanel>
+  );
+}
+```
+
+<Note>
+  `DocumentReader` is a pure presentation component with no internal state. If
+  your content comes from a rich text editor or markdown, replace it with your
+  own renderer and pass it as `children` to `DocumentPanel` while keeping the
+  controlled `state` prop in your application.
+</Note>

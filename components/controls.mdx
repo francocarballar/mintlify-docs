@@ -1,0 +1,254 @@
+---
+title: "Checkbox, Radio, Switch, and Slider Controls"
+sidebarTitle: "Controls"
+description: "Boolean and selection controls for Linda UI forms: Checkbox, CheckboxGroup, Radio, RadioGroup, Switch, SwitchGroup, and Slider with a uniform onChange API."
+---
+
+Linda UI provides a set of composable selection controls — checkboxes, radio buttons, toggles, and sliders — each with a flat, consistent props API. Every control emits an `onChange` callback (not `onValueChange`), so boolean controls deliver `boolean` and collection controls deliver the updated array or value directly to your handler.
+
+## Checkbox
+
+Use `<Checkbox>` when you need a single binary opt-in. The `isSelected` prop controls its checked state and `onChange` fires with the new boolean every time the user toggles it.
+
+```tsx
+import { Checkbox } from "@lindaui/ui/checkbox";
+
+function Example() {
+  const [checked, setChecked] = React.useState(false);
+
+  return (
+    <Checkbox isSelected={checked} onChange={setChecked}>
+      Accept terms and conditions
+    </Checkbox>
+  );
+}
+```
+
+<Note>
+  `onChange` receives `isSelected: boolean` — the new state after the toggle — not a DOM event. You can pass `setChecked` directly without wrapping it.
+</Note>
+
+<ParamField body="isSelected" type="boolean">
+  Controls whether the checkbox is checked. Pass `true` to check it.
+</ParamField>
+
+<ParamField body="onChange" type="(isSelected: boolean) => void">
+  Called after every toggle with the next checked state.
+</ParamField>
+
+<ParamField body="isDisabled" type="boolean" default="false">
+  Prevents interaction and applies disabled styling.
+</ParamField>
+
+<ParamField body="isRequired" type="boolean" default="false">
+  Marks the field as required for form validation.
+</ParamField>
+
+<ParamField body="children" type="ReactNode">
+  The label rendered next to the checkbox control.
+</ParamField>
+
+---
+
+## CheckboxGroup
+
+`<CheckboxGroup>` manages a list of checkboxes as a controlled set. You supply the currently selected values as a `string[]` and receive the full updated array in `onChange` whenever the user checks or unchecks an item.
+
+```tsx
+import { CheckboxGroup } from "@lindaui/ui/checkbox-group";
+import { Checkbox } from "@lindaui/ui/checkbox";
+
+function Example() {
+  const [selected, setSelected] = React.useState<string[]>([]);
+
+  return (
+    <CheckboxGroup value={selected} onChange={setSelected} label="Permissions">
+      <Checkbox value="read">Read</Checkbox>
+      <Checkbox value="write">Write</Checkbox>
+      <Checkbox value="delete">Delete</Checkbox>
+    </CheckboxGroup>
+  );
+}
+```
+
+<ParamField body="value" type="string[]">
+  The array of currently selected values. Drive this from state to keep the group controlled.
+</ParamField>
+
+<ParamField body="onChange" type="(values: string[]) => void">
+  Called with the complete updated array after any check or uncheck.
+</ParamField>
+
+<ParamField body="label" type="ReactNode">
+  Accessible group label rendered above the checkboxes.
+</ParamField>
+
+<ParamField body="isDisabled" type="boolean" default="false">
+  Disables every checkbox in the group at once.
+</ParamField>
+
+---
+
+## Radio and RadioGroup
+
+`<Radio>` and `<RadioGroup>` work together to enforce a single selection from a set of mutually exclusive options. Always wrap `<Radio>` items inside a `<RadioGroup>` — the group owns the `value` and `onChange`.
+
+```tsx
+import { RadioGroup } from "@lindaui/ui/radio-group";
+import { Radio } from "@lindaui/ui/radio";
+
+function Example() {
+  const [plan, setPlan] = React.useState("monthly");
+
+  return (
+    <RadioGroup value={plan} onChange={setPlan} label="Billing period">
+      <Radio value="monthly">Monthly</Radio>
+      <Radio value="quarterly">Quarterly</Radio>
+      <Radio value="annual">Annual</Radio>
+    </RadioGroup>
+  );
+}
+```
+
+<ParamField body="value" type="string">
+  The `value` of the currently selected `<Radio>` child.
+</ParamField>
+
+<ParamField body="onChange" type="(value: string) => void">
+  Called with the `value` prop of whichever radio the user selects.
+</ParamField>
+
+<ParamField body="label" type="ReactNode">
+  Accessible group label.
+</ParamField>
+
+<ParamField body="isDisabled" type="boolean" default="false">
+  Disables the entire group.
+</ParamField>
+
+Each `<Radio>` takes a `value` prop (the string emitted to the group's `onChange`) and an optional `isDisabled` to individually disable a single option.
+
+---
+
+## Switch
+
+`<Switch>` is a toggle that works identically to `<Checkbox>` in terms of its props — `isSelected` for state, `onChange(isSelected: boolean)` for updates — but renders as a sliding pill rather than a checkbox, signalling an immediate on/off action rather than a form selection.
+
+```tsx
+import { Switch } from "@lindaui/ui/switch";
+
+function Example() {
+  const [enabled, setEnabled] = React.useState(false);
+
+  return (
+    <Switch isSelected={enabled} onChange={setEnabled}>
+      Enable notifications
+    </Switch>
+  );
+}
+```
+
+<ParamField body="isSelected" type="boolean">
+  Whether the switch is on.
+</ParamField>
+
+<ParamField body="onChange" type="(isSelected: boolean) => void">
+  Called with the next state after every toggle.
+</ParamField>
+
+<ParamField body="isDisabled" type="boolean" default="false">
+  Prevents interaction.
+</ParamField>
+
+<ParamField body="children" type="ReactNode">
+  Label rendered beside the switch thumb.
+</ParamField>
+
+---
+
+## SwitchGroup
+
+`<SwitchGroup>` is a **layout-only** wrapper. It groups a set of switches visually and semantically but does not manage shared value or `onChange` state — each `<Switch>` inside remains independently controlled.
+
+```tsx
+import { SwitchGroup } from "@lindaui/ui/switch-group";
+import { Switch } from "@lindaui/ui/switch";
+
+function Example() {
+  const [email, setEmail] = React.useState(true);
+  const [sms, setSms] = React.useState(false);
+
+  return (
+    <SwitchGroup>
+      <Switch isSelected={email} onChange={setEmail}>
+        Email alerts
+      </Switch>
+      <Switch isSelected={sms} onChange={setSms}>
+        SMS alerts
+      </Switch>
+    </SwitchGroup>
+  );
+}
+```
+
+<Note>
+  Because `SwitchGroup` has no `value` or `onChange` of its own, you must track each switch's state individually. Use it purely for visual grouping and accessible labelling.
+</Note>
+
+---
+
+## Slider
+
+`<Slider>` lets users select a numeric value within a defined range by dragging a thumb along a track. Pass the current value and a handler to keep it controlled, and set `minValue`, `maxValue`, and `step` to constrain the allowed range.
+
+```tsx
+import { Slider } from "@lindaui/ui/slider";
+
+function Example() {
+  const [volume, setVolume] = React.useState(50);
+
+  return (
+    <Slider
+      value={volume}
+      onChange={setVolume}
+      minValue={0}
+      maxValue={100}
+      step={1}
+    >
+      Volume
+    </Slider>
+  );
+}
+```
+
+<Tip>
+  You can customise the track appearance by passing your own `SliderTrack`, `SliderFill`, and `SliderThumb` as children. When no children are provided, the default composed track is rendered automatically.
+</Tip>
+
+<ParamField body="value" type="number">
+  The current numeric value of the slider.
+</ParamField>
+
+<ParamField body="onChange" type="(value: number) => void">
+  Called continuously as the user drags the thumb.
+</ParamField>
+
+<ParamField body="minValue" type="number" default="0">
+  The minimum selectable value.
+</ParamField>
+
+<ParamField body="maxValue" type="number" default="100">
+  The maximum selectable value.
+</ParamField>
+
+<ParamField body="step" type="number" default="1">
+  The increment between valid values.
+</ParamField>
+
+<ParamField body="isDisabled" type="boolean" default="false">
+  Prevents dragging and applies disabled styling.
+</ParamField>
+
+<ParamField body="children" type="ReactNode">
+  Optional label. When you pass custom composition children (track/fill/thumb), they replace the default layout.
+</ParamField>

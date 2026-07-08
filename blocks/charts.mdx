@@ -1,0 +1,424 @@
+---
+title: "Chart Blocks: Area, Bar, Line, Pie, and More"
+sidebarTitle: "Charts"
+description: "Drop-in chart blocks built on Recharts and @lindaui/ui/chart—area, bar, line, pie, radar, radial, stat cards, and chart card wrappers."
+---
+
+The chart blocks are thin, controlled wrappers around [Recharts](https://recharts.org)
+that share a consistent flat API. You supply your data, a configuration map, and a few
+keys—the block handles the Recharts composition, tooltip, legend, and color injection
+from design tokens. Dark mode is automatic because colors come from CSS variables.
+
+## Shared chart API
+
+Every chart block (except dashboard components) accepts the same core props:
+
+<ParamField path="data" type="Array<Record<string, string | number>>" required>
+  Array of data objects. Keys become the category or series identifiers.
+</ParamField>
+
+<ParamField path="config" type="ChartConfig" required>
+  Maps series keys to display labels and colors. Imported from
+  `@lindaui/ui/chart`. The `ChartContainer` injects each color as
+  `var(--color-<key>)` so Recharts components can reference it.
+</ParamField>
+
+<ParamField path="categoryKey" type="string" required>
+  The key in each data object to use as the X-axis (or radial/polar axis)
+  category.
+</ParamField>
+
+<ParamField path="series" type="string[]" required>
+  The keys in each data object to render as series. Each key must have an
+  entry in `config`.
+</ParamField>
+
+<ParamField path="variant" type="string">
+  Chart-specific variant. See each block's section for valid values.
+</ParamField>
+
+<ParamField path="className" type="string">
+  Additional CSS classes forwarded to `ChartContainer`.
+</ParamField>
+
+### ChartConfig pattern
+
+```tsx
+import type { ChartConfig } from "@lindaui/ui/chart";
+
+const config: ChartConfig = {
+  sales:   { label: "Sales",   color: "var(--chart-1)" },
+  returns: { label: "Returns", color: "var(--chart-2)" },
+};
+```
+
+`var(--chart-1)` through `var(--chart-5)` are provided by `@lindaui/tokens` and adapt
+automatically between light and dark mode. You can also pass any valid CSS color string.
+
+<Note>
+  Import the token CSS once at your app root—`import "@lindaui/tokens/css"`—so
+  the `--chart-*` variables are defined. Without this, the charts will render
+  without color fills.
+</Note>
+
+---
+
+## AreaChart
+
+Renders a filled area chart. Three layout variants are available.
+
+```tsx
+import { AreaChart } from "@lindaui/blocks/area-chart";
+
+const config: ChartConfig = {
+  revenue: { label: "Revenue", color: "var(--chart-1)" },
+  cost:    { label: "Cost",    color: "var(--chart-2)" },
+};
+
+const data = [
+  { month: "Jan", revenue: 4200, cost: 2400 },
+  { month: "Feb", revenue: 5800, cost: 2800 },
+  { month: "Mar", revenue: 5200, cost: 3100 },
+];
+
+<AreaChart
+  data={data}
+  config={config}
+  categoryKey="month"
+  series={["revenue", "cost"]}
+  variant="gradient"
+/>
+```
+
+### Variants
+
+| Value | Description |
+|-------|-------------|
+| `default` | Solid fill areas, no overlap handling |
+| `stacked` | Areas stacked on top of each other (cumulative) |
+| `gradient` | Each area fades from 80% opacity at the top to 10% at the bottom |
+
+---
+
+## BarChart
+
+Renders a bar chart. Supports vertical (default) and horizontal orientations, as well
+as grouped and stacked multi-series modes.
+
+```tsx
+import { BarChart } from "@lindaui/blocks/bar-chart";
+
+<BarChart
+  data={data}
+  config={config}
+  categoryKey="quarter"
+  series={["q1", "q2", "q3"]}
+  variant="stacked"
+/>
+```
+
+### Variants
+
+| Value | Description |
+|-------|-------------|
+| `default` | Vertical bars, series side-by-side |
+| `grouped` | Explicit grouped layout (same as default for multi-series) |
+| `stacked` | Bars stacked into a single column per category |
+| `horizontal` | Rotates the chart 90°; categories on the Y-axis |
+
+---
+
+## LineChart
+
+Renders a line chart. Use `dots` variant to emphasize individual data points.
+
+```tsx
+import { LineChart } from "@lindaui/blocks/line-chart";
+
+<LineChart
+  data={data}
+  config={config}
+  categoryKey="week"
+  series={["signups", "churns"]}
+  variant="dots"
+/>
+```
+
+### Variants
+
+| Value | Description |
+|-------|-------------|
+| `default` | Smooth monotone lines, no dot markers |
+| `dots` | Adds a dot marker at every data point |
+
+---
+
+## PieChart
+
+Renders a pie or donut chart. Uses `categoryKey` and `valueKey` instead of `series`
+because a pie chart has one value per slice.
+
+```tsx
+import { PieChart } from "@lindaui/blocks/pie-chart";
+
+const data = [
+  { category: "direct",   value: 540 },
+  { category: "organic",  value: 320 },
+  { category: "referral", value: 180 },
+];
+
+const config: ChartConfig = {
+  direct:   { label: "Direct",   color: "var(--chart-1)" },
+  organic:  { label: "Organic",  color: "var(--chart-2)" },
+  referral: { label: "Referral", color: "var(--chart-3)" },
+};
+
+<PieChart
+  data={data}
+  config={config}
+  categoryKey="category"
+  valueKey="value"
+  variant="donut"
+/>
+```
+
+### Props specific to PieChart
+
+<ParamField path="valueKey" type="string" required>
+  The key in each data object that holds the numeric slice value.
+</ParamField>
+
+### Variants
+
+| Value | Description |
+|-------|-------------|
+| `pie` | Solid pie with no inner cutout |
+| `donut` | Pie with a 55% inner radius cutout |
+| `label` | Donut (45% inner radius) with category labels on the outside |
+
+---
+
+## RadarChart
+
+Renders a radar (spider) chart for multivariate comparisons across categories.
+
+```tsx
+import { RadarChart } from "@lindaui/blocks/radar-chart";
+
+const data = [
+  { skill: "TypeScript", alice: 90, bob: 70 },
+  { skill: "Design",     alice: 60, bob: 85 },
+  { skill: "Testing",    alice: 80, bob: 65 },
+  { skill: "DevOps",     alice: 55, bob: 75 },
+];
+
+const config: ChartConfig = {
+  alice: { label: "Alice", color: "var(--chart-1)" },
+  bob:   { label: "Bob",   color: "var(--chart-2)" },
+};
+
+<RadarChart
+  data={data}
+  config={config}
+  categoryKey="skill"
+  series={["alice", "bob"]}
+/>
+```
+
+`RadarChart` does not have a `variant` prop—the polar grid and angle axes are always
+rendered with sensible defaults.
+
+---
+
+## RadialChart
+
+Renders a radial bar chart, useful for showing progress or part-to-whole relationships
+in a circular layout.
+
+```tsx
+import { RadialChart } from "@lindaui/blocks/radial-chart";
+
+const data = [
+  { category: "Completed", value: 75 },
+  { category: "Pending",   value: 20 },
+  { category: "Failed",    value: 5 },
+];
+
+const config: ChartConfig = {
+  value: { label: "Count", color: "var(--chart-1)" },
+};
+
+<RadialChart
+  data={data}
+  config={config}
+  categoryKey="category"
+  series={["value"]}
+  variant="label"
+/>
+```
+
+### Variants
+
+| Value | Description |
+|-------|-------------|
+| `default` | Each bar has a background track; bars are independent |
+| `stacked` | Bars share a single `stackId` and accumulate |
+| `label` | Shows the computed total value in the center of the chart |
+
+---
+
+## StatCard
+
+`StatCard` is a KPI card for dashboards. It shows a label, a value, an optional delta
+badge, an optional sparkline, and an optional icon. Two layout variants are provided.
+
+```tsx
+import { StatCard } from "@lindaui/blocks/stat-card";
+import { Users }    from "lucide-react";
+
+// Default variant: compact header style
+<StatCard
+  label="Active users"
+  value="1,284"
+  delta={{ value: "+12%", trend: "up" }}
+  description="vs. last 30 days"
+  icon={<Users size={16} />}
+/>
+
+// Featured variant: prominent icon + large value
+<StatCard
+  variant="featured"
+  tone="success"
+  label="Monthly revenue"
+  value="$48,200"
+  delta={{ value: "+8.3%", trend: "up" }}
+  icon={<DollarSign size={20} />}
+  sparkline={{
+    data: [{ v: 30 }, { v: 42 }, { v: 38 }, { v: 55 }, { v: 48 }],
+    dataKey: "v",
+    color: "var(--chart-1)",
+  }}
+/>
+```
+
+### Props
+
+<ParamField path="label" type="ReactNode" required>
+  KPI label (e.g. "Active users").
+</ParamField>
+
+<ParamField path="value" type="ReactNode" required>
+  Formatted KPI value (e.g. "1,284" or "$48,200").
+</ParamField>
+
+<ParamField path="delta" type='{ value: string; trend: "up" | "down" | "neutral" }'>
+  Change badge. `up` renders green, `down` renders red, `neutral` renders
+  the default muted style.
+</ParamField>
+
+<ParamField path="description" type="ReactNode">
+  Supplemental text below the value/delta (e.g. "vs. last 30 days").
+</ParamField>
+
+<ParamField path="icon" type="ReactNode">
+  Icon displayed in the card header (default variant) or in a tinted box
+  (featured variant).
+</ParamField>
+
+<ParamField path="sparkline" type="{ data: Array<Record<string, number>>; dataKey: string; color?: string }">
+  A small line chart rendered below the card content.
+</ParamField>
+
+<ParamField path="variant" type='"default" | "featured"' default='"default"'>
+  `featured` places a large icon box top-left, the delta badge top-right, and
+  renders the value at 3xl with the tone color.
+</ParamField>
+
+<ParamField path="tone" type='"primary" | "success" | "warning" | "danger" | "neutral"' default='"neutral"'>
+  Tint applied to the icon box and value color in `featured` variant.
+</ParamField>
+
+---
+
+## ChartCard
+
+`ChartCard` wraps any chart block in a styled `Card` with a title, optional
+description, optional action slot (e.g. a filter select), and an optional footer.
+
+```tsx
+import { ChartCard } from "@lindaui/blocks/chart-card";
+import { AreaChart } from "@lindaui/blocks/area-chart";
+
+<ChartCard
+  title="Revenue over time"
+  description="Monthly totals for the current year"
+  action={<PeriodSelect value={period} onChange={setPeriod} />}
+  footer={<span className="text-xs text-muted-foreground">Updated 5 min ago</span>}
+>
+  <AreaChart
+    data={data}
+    config={config}
+    categoryKey="month"
+    series={["revenue"]}
+    variant="gradient"
+    className="h-[260px]"
+  />
+</ChartCard>
+```
+
+### Props
+
+<ParamField path="title" type="ReactNode" required>
+  Card title.
+</ParamField>
+
+<ParamField path="children" type="ReactNode" required>
+  The chart block (or any other content).
+</ParamField>
+
+<ParamField path="description" type="ReactNode">
+  Secondary text below the title.
+</ParamField>
+
+<ParamField path="action" type="ReactNode">
+  Content in the top-right corner of the header (e.g. a period selector).
+</ParamField>
+
+<ParamField path="footer" type="ReactNode">
+  Content in the card footer.
+</ParamField>
+
+---
+
+## StatsGrid
+
+`StatsGrid` arranges multiple `StatCard` components in a responsive grid. It is
+mobile-first: one column on small screens, two columns on `sm`, and up to four columns
+on `lg`.
+
+```tsx
+import { StatsGrid } from "@lindaui/blocks/stats-grid";
+import { StatCard }  from "@lindaui/blocks/stat-card";
+
+<StatsGrid columns={4}>
+  <StatCard label="Users"    value="1,284" delta={{ value: "+12%", trend: "up"      }} />
+  <StatCard label="Revenue"  value="$48k"  delta={{ value: "+8%",  trend: "up"      }} />
+  <StatCard label="Churn"    value="2.4%"  delta={{ value: "+0.3%",trend: "down"    }} />
+  <StatCard label="NPS"      value="62"    delta={{ value: "–",    trend: "neutral" }} />
+</StatsGrid>
+```
+
+### Props
+
+<ParamField path="children" type="ReactNode" required>
+  `StatCard` components (or any grid items).
+</ParamField>
+
+<ParamField path="columns" type="2 | 3 | 4" default="4">
+  Number of columns on large screens. The grid always collapses to 2 columns
+  on `sm` and 1 column on mobile regardless of this setting.
+</ParamField>
+
+<ParamField path="className" type="string">
+  Additional CSS classes forwarded to the grid container.
+</ParamField>

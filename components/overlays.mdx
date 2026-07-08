@@ -1,0 +1,299 @@
+---
+title: "Dialogs, Menus, Popovers, and Tooltips"
+sidebarTitle: "Overlays"
+description: "Overlay components for focused user interactions in Linda UI: Dialog, AlertDialog, Menu, Drawer, Popover, and Tooltip with controlled open state patterns."
+---
+
+Linda UI's overlay components let you layer focused interactions — confirmations, contextual menus, floating content, and hints — on top of your page without interrupting the main layout. All blocking overlays (`Dialog`, `AlertDialog`) use a controlled `open`/`onClose` pattern; lightweight overlays (`Popover`, `Tooltip`) use HeroUI v3's compound-part composition exported directly from Linda UI.
+
+## Dialog
+
+`<Dialog>` is a fully controlled modal. You manage open state yourself (the `useDisclosure` hook is the recommended way) and pass `open` and `onClose` as props. The dialog renders a backdrop, a sized container, and optional `title` and `footer` slots around its `children`.
+
+```tsx
+import { Dialog } from "@lindaui/ui/dialog";
+import { useDisclosure } from "@lindaui/ui/use-disclosure";
+import { Button } from "@lindaui/ui/button";
+
+function Example() {
+  const { isOpen, open, close } = useDisclosure();
+
+  return (
+    <>
+      <Button onPress={open}>Open dialog</Button>
+
+      <Dialog
+        open={isOpen}
+        onClose={close}
+        title="Confirm changes"
+        size="md"
+        isDismissable
+        footer={
+          <>
+            <Button variant="ghost" onPress={close}>Cancel</Button>
+            <Button variant="primary" onPress={close}>Save</Button>
+          </>
+        }
+      >
+        Are you sure you want to save these changes?
+      </Dialog>
+    </>
+  );
+}
+```
+
+<Note>
+  `useDisclosure` returns stable `open`, `close`, and `toggle` callbacks so you can pass them directly to event handlers without wrapping them in `useCallback`.
+</Note>
+
+<ParamField body="open" type="boolean" required>
+  Whether the dialog is currently visible.
+</ParamField>
+
+<ParamField body="onClose" type="() => void" required>
+  Called when the user dismisses the dialog (backdrop click, Escape key, or your own close button). Update your state here.
+</ParamField>
+
+<ParamField body="title" type="ReactNode">
+  Rendered in the modal header. Omit it to hide the header entirely.
+</ParamField>
+
+<ParamField body="footer" type="ReactNode">
+  Rendered in the modal footer. Typically contains action buttons.
+</ParamField>
+
+<ParamField body="size" type='"sm" | "md" | "lg" | "xl" | "full"' default='"md"'>
+  Controls the width of the modal container.
+</ParamField>
+
+<ParamField body="isDismissable" type="boolean" default="true">
+  When `true`, clicking the backdrop or pressing Escape calls `onClose`. Set to `false` for flows that require an explicit action before closing.
+</ParamField>
+
+<ParamField body="children" type="ReactNode" required>
+  The main body content of the dialog.
+</ParamField>
+
+---
+
+## AlertDialog
+
+`<AlertDialog>` is a specialised dialog for confirmations and destructive actions. It builds its own footer with confirm and cancel buttons so you only need to supply labels and handlers. Set `isDestructive` to style the confirm button in the danger variant.
+
+```tsx
+import { AlertDialog } from "@lindaui/ui/alert-dialog";
+import { useDisclosure } from "@lindaui/ui/use-disclosure";
+import { Button } from "@lindaui/ui/button";
+
+function Example() {
+  const { isOpen, open, close } = useDisclosure();
+
+  function handleDelete() {
+    // perform delete…
+  }
+
+  return (
+    <>
+      <Button variant="danger" onPress={open}>Delete record</Button>
+
+      <AlertDialog
+        open={isOpen}
+        onClose={close}
+        onConfirm={handleDelete}
+        title="Delete record?"
+        description="This action cannot be undone. The record will be permanently removed."
+        confirmLabel="Delete"
+        cancelLabel="Cancel"
+        isDestructive
+      />
+    </>
+  );
+}
+```
+
+<ParamField body="open" type="boolean" required>
+  Whether the alert dialog is visible.
+</ParamField>
+
+<ParamField body="onClose" type="() => void" required>
+  Called when the user cancels or the dialog closes.
+</ParamField>
+
+<ParamField body="onConfirm" type="() => void" required>
+  Called when the user presses the confirm button. `onClose` is also called automatically afterward.
+</ParamField>
+
+<ParamField body="title" type="ReactNode" required>
+  Short heading that states what the user is confirming.
+</ParamField>
+
+<ParamField body="description" type="ReactNode" required>
+  Supporting text that explains the consequence of the action.
+</ParamField>
+
+<ParamField body="confirmLabel" type="string" default='"Confirmar"'>
+  Label for the confirm button.
+</ParamField>
+
+<ParamField body="cancelLabel" type="string" default='"Cancelar"'>
+  Label for the cancel button.
+</ParamField>
+
+<ParamField body="isDestructive" type="boolean" default="false">
+  When `true`, the confirm button renders in the `danger` variant.
+</ParamField>
+
+---
+
+## Menu
+
+`<Menu>` renders a dropdown action menu. You provide an `items` array of action descriptors and a `trigger` that supplies the visible button content. HeroUI's `DropdownTrigger` renders the `<button>` element itself, so your `trigger` must be the *content inside* the button — an icon, a label, or both.
+
+<Warning>
+  **Do not pass a `<button>` as the `trigger` prop.** `DropdownTrigger` already wraps its children in a button element, so passing another `<button>` creates a nested `<button>` inside `<button>`, which is invalid HTML and breaks keyboard and screen-reader behaviour. Pass an icon component or a plain text node instead.
+</Warning>
+
+```tsx
+import { Menu } from "@lindaui/ui/menu";
+import { DotsVerticalIcon } from "@heroicons/react/24/outline";
+
+function Example() {
+  return (
+    <Menu
+      trigger={<DotsVerticalIcon className="h-5 w-5" />}
+      items={[
+        { key: "edit",   label: "Edit",   onAction: () => console.log("edit") },
+        { key: "share",  label: "Share",  onAction: () => console.log("share") },
+        { key: "delete", label: "Delete", onAction: () => console.log("delete"), isDanger: true },
+      ]}
+    />
+  );
+}
+```
+
+<ParamField body="trigger" type="ReactNode" required>
+  Content rendered inside the trigger button — an icon, a label string, or a fragment. **Not** a `<button>` element.
+</ParamField>
+
+<ParamField body="items" type="MenuItem[]" required>
+  Array of action descriptors. Each item has the following shape:
+</ParamField>
+
+<ParamField body="items[].key" type="string" required>
+  Unique identifier for the item, used to dispatch `onAction`.
+</ParamField>
+
+<ParamField body="items[].label" type="ReactNode" required>
+  Visible label for the menu item.
+</ParamField>
+
+<ParamField body="items[].onAction" type="() => void">
+  Called when the user activates this item.
+</ParamField>
+
+<ParamField body="items[].isDanger" type="boolean" default="false">
+  Applies the `text-danger` colour to signal a destructive action.
+</ParamField>
+
+<ParamField body="items[].isDisabled" type="boolean" default="false">
+  Prevents the item from being activated.
+</ParamField>
+
+---
+
+## Drawer
+
+`<Drawer>` is a panel that slides in from the edge of the viewport. Linda UI re-exports HeroUI v3's compound `Drawer` directly, so you compose it from its parts. Refer to the HeroUI v3 `Drawer` documentation for the full props surface.
+
+```tsx
+import {
+  Drawer,
+  DrawerTrigger,
+  DrawerContent,
+  DrawerHeader,
+  DrawerBody,
+  DrawerFooter,
+} from "@lindaui/ui/drawer";
+import { Button } from "@lindaui/ui/button";
+
+function Example() {
+  return (
+    <Drawer>
+      <DrawerTrigger>
+        <Button>Open drawer</Button>
+      </DrawerTrigger>
+      <DrawerContent>
+        <DrawerHeader>Settings</DrawerHeader>
+        <DrawerBody>
+          <p>Your settings content goes here.</p>
+        </DrawerBody>
+        <DrawerFooter>
+          <Button variant="ghost">Cancel</Button>
+          <Button variant="primary">Apply</Button>
+        </DrawerFooter>
+      </DrawerContent>
+    </Drawer>
+  );
+}
+```
+
+<Note>
+  `Drawer` is a compound re-export of HeroUI v3. Import all the parts you need from `@lindaui/ui/drawer` and compose them directly.
+</Note>
+
+---
+
+## Popover
+
+`<Popover>` attaches floating content to a trigger element. Linda UI re-exports `Popover`, `PopoverTrigger`, and `PopoverContent` from HeroUI v3. The trigger element controls open state automatically through React Aria's interaction handling.
+
+```tsx
+import {
+  Popover,
+  PopoverTrigger,
+  PopoverContent,
+} from "@lindaui/ui/popover";
+import { Button } from "@lindaui/ui/button";
+
+function Example() {
+  return (
+    <Popover>
+      <PopoverTrigger>
+        <Button variant="secondary">More info</Button>
+      </PopoverTrigger>
+      <PopoverContent>
+        <p className="p-4 text-sm">
+          This setting controls the retry behaviour for failed requests.
+        </p>
+      </PopoverContent>
+    </Popover>
+  );
+}
+```
+
+<Tip>
+  Use `Popover` for richer floating content (forms, lists, descriptions). For short single-line hints, prefer `Tooltip` instead.
+</Tip>
+
+---
+
+## Tooltip
+
+`<Tooltip>` shows a brief label when the user hovers or focuses a trigger element. Linda UI re-exports HeroUI v3's `Tooltip` directly. Wrap the element you want to annotate as the child of `<Tooltip>`.
+
+```tsx
+import { Tooltip } from "@lindaui/ui/tooltip";
+import { Button } from "@lindaui/ui/button";
+
+function Example() {
+  return (
+    <Tooltip content="Saves your progress automatically">
+      <Button variant="ghost">Auto-save</Button>
+    </Tooltip>
+  );
+}
+```
+
+<Note>
+  `Tooltip` is a direct re-export of HeroUI v3. Consult the HeroUI v3 `Tooltip` documentation for advanced options such as placement, delay, and offset.
+</Note>

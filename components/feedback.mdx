@@ -1,0 +1,305 @@
+---
+title: "Toast Notifications, Spinners, and Progress Indicators"
+sidebarTitle: "Feedback"
+description: "Communicate async state and progress to users with toasts, spinners, skeletons, progress bars, progress circles, and meters."
+---
+
+Linda UI ships a complete set of feedback primitives so you can communicate loading states, async results, and numeric progress without reaching for third-party libraries. Each component is a thin, client-ready wrapper over HeroUI v3 and is imported from its own entry point.
+
+## Toast
+
+Toasts display brief, non-blocking notifications that appear at the edge of the screen and dismiss automatically. Linda UI uses HeroUI v3's **queue-based** toast API — `toast()` to trigger a notification and `<ToastProvider />` mounted once at your app root to render the queue.
+
+<Warning>
+  Linda UI uses HeroUI **v3**. Do **not** use `addToast()` — that is the v2 API and will not work here. The correct function is `toast()`.
+</Warning>
+
+### Mounting the provider
+
+Mount `<ToastProvider />` once, high in your component tree (e.g. inside your root layout). Every `toast()` call you make anywhere in the app will feed into that single outlet.
+
+```tsx
+// app/layout.tsx (Next.js App Router example)
+import { ToastProvider } from "@lindaui/ui/toast";
+
+export default function RootLayout({ children }: { children: React.ReactNode }) {
+  return (
+    <html lang="en">
+      <body>
+        {children}
+        <ToastProvider />
+      </body>
+    </html>
+  );
+}
+```
+
+### Triggering toasts
+
+Once the provider is mounted you can call `toast()` from any client component — no context or hook required.
+
+```tsx
+"use client";
+import { toast } from "@lindaui/ui/toast";
+
+export function SaveButton() {
+  async function handleSave() {
+    await saveData();
+    toast("Changes saved successfully.");
+  }
+
+  return <button onClick={handleSave}>Save</button>;
+}
+```
+
+You can pass an options object to customise the toast:
+
+```tsx
+"use client";
+import { toast } from "@lindaui/ui/toast";
+
+// Success toast with a title and description
+toast("Profile updated", {
+  description: "Your changes have been saved to the server.",
+});
+
+// Error variant
+toast("Something went wrong", {
+  color: "danger",
+});
+```
+
+### Using the queue directly
+
+`toastQueue` exposes the underlying queue instance when you need lower-level control, such as closing a specific toast programmatically.
+
+```tsx
+"use client";
+import { toast, toastQueue } from "@lindaui/ui/toast";
+
+const key = toast("Uploading…", { timeout: Infinity });
+
+// Later — dismiss when the upload finishes
+toastQueue.close(key);
+```
+
+<Tip>
+  Keep `<ToastProvider />` near the bottom of your layout's JSX so toast elements sit above other portals in the stacking context.
+</Tip>
+
+---
+
+## Spinner
+
+`Spinner` is a thin wrapper over HeroUI's spinner component. Use it to indicate indeterminate loading activity — inside buttons, over content, or as a full-page overlay.
+
+```tsx
+import { Spinner } from "@lindaui/ui/spinner";
+
+// Default spinner
+<Spinner />
+
+// Labelled spinner with a custom size
+<Spinner label="Loading data…" size="lg" />
+
+// Coloured variant
+<Spinner color="primary" />
+```
+
+All [HeroUI `SpinnerProps`](https://heroui.com) are forwarded directly, so you can pass `size`, `color`, `label`, `classNames`, and any other supported prop.
+
+<CodeGroup>
+```tsx Inside a button
+"use client";
+import { Spinner } from "@lindaui/ui/spinner";
+
+function SubmitButton({ isPending }: { isPending: boolean }) {
+  return (
+    <button disabled={isPending}>
+      {isPending ? <Spinner size="sm" /> : "Submit"}
+    </button>
+  );
+}
+```
+
+```tsx Full-page overlay
+import { Spinner } from "@lindaui/ui/spinner";
+
+function PageLoader() {
+  return (
+    <div className="fixed inset-0 flex items-center justify-center bg-white/60">
+      <Spinner size="lg" label="Loading…" />
+    </div>
+  );
+}
+```
+</CodeGroup>
+
+---
+
+## Skeleton
+
+`Skeleton` renders a shimmering placeholder that preserves the layout of content while it loads. Drop it in wherever you would otherwise show a blank space or a spinner.
+
+```tsx
+import { Skeleton } from "@lindaui/ui/skeleton";
+
+// Mimic a line of text
+<Skeleton className="h-4 w-48 rounded" />
+
+// Mimic an avatar
+<Skeleton className="h-10 w-10 rounded-full" />
+```
+
+Compose multiple `Skeleton` blocks to mirror your real content structure:
+
+```tsx
+import { Skeleton } from "@lindaui/ui/skeleton";
+
+function ArticleCardSkeleton() {
+  return (
+    <div className="space-y-3 p-4">
+      <Skeleton className="h-48 w-full rounded-lg" />
+      <Skeleton className="h-5 w-3/4 rounded" />
+      <Skeleton className="h-4 w-1/2 rounded" />
+    </div>
+  );
+}
+```
+
+All HeroUI `SkeletonProps` are accepted and forwarded.
+
+---
+
+## Progress
+
+`Progress` (re-exported as `ProgressBar` from HeroUI v3) renders a linear progress bar. Use it to show determinate progress for tasks with a known completion percentage, or set `isIndeterminate` for ongoing activity.
+
+```tsx
+import { Progress } from "@lindaui/ui/progress";
+
+// Determinate — 60 % complete
+<Progress value={60} maxValue={100} label="Uploading…" />
+
+// Indeterminate
+<Progress isIndeterminate label="Processing…" />
+```
+
+<ParamField body="value" type="number">
+  The current progress value. Omit or combine with `isIndeterminate` for an indeterminate bar.
+</ParamField>
+
+<ParamField body="maxValue" type="number" default="100">
+  The maximum value. Defaults to `100`.
+</ParamField>
+
+<ParamField body="label" type="string">
+  Accessible label rendered above the bar.
+</ParamField>
+
+<ParamField body="isIndeterminate" type="boolean" default="false">
+  When `true`, the bar animates continuously with no defined endpoint.
+</ParamField>
+
+```tsx
+// Controlled progress with a state variable
+"use client";
+import { useState } from "react";
+import { Progress } from "@lindaui/ui/progress";
+
+export function UploadProgress() {
+  const [progress, setProgress] = useState(0);
+
+  return (
+    <Progress
+      value={progress}
+      maxValue={100}
+      label={`Uploading… ${progress}%`}
+      color="primary"
+    />
+  );
+}
+```
+
+---
+
+## ProgressCircle
+
+`ProgressCircle` is the circular counterpart to `Progress`. It suits compact spaces like dashboards, stat cards, or icon buttons where a linear bar would not fit.
+
+```tsx
+import { ProgressCircle } from "@lindaui/ui/progress-circle";
+
+// 75 % complete
+<ProgressCircle value={75} />
+
+// With accessible label and custom size
+<ProgressCircle value={42} aria-label="Storage used" size="lg" />
+
+// Indeterminate spinner-style circle
+<ProgressCircle isIndeterminate aria-label="Loading" />
+```
+
+<CodeGroup>
+```tsx Stat card
+import { ProgressCircle } from "@lindaui/ui/progress-circle";
+
+function StorageCard({ used, total }: { used: number; total: number }) {
+  const pct = Math.round((used / total) * 100);
+  return (
+    <div className="flex items-center gap-4">
+      <ProgressCircle value={pct} aria-label={`${pct}% used`} />
+      <p>{used} GB of {total} GB used</p>
+    </div>
+  );
+}
+```
+</CodeGroup>
+
+---
+
+## Meter
+
+`Meter` displays a scalar measurement within a known range — think storage usage, battery level, or a quality score. Unlike `Progress`, a meter represents a static reading rather than a task's completion.
+
+```tsx
+import { Meter } from "@lindaui/ui/meter";
+
+<Meter value={70} minValue={0} maxValue={100} label="Disk usage" />
+```
+
+<ParamField body="value" type="number" required>
+  The current measured value.
+</ParamField>
+
+<ParamField body="minValue" type="number" default="0">
+  The minimum value of the range.
+</ParamField>
+
+<ParamField body="maxValue" type="number" default="100">
+  The maximum value of the range.
+</ParamField>
+
+<ParamField body="label" type="string">
+  Accessible label rendered alongside the meter.
+</ParamField>
+
+```tsx
+import { Meter } from "@lindaui/ui/meter";
+
+function BatteryIndicator({ level }: { level: number }) {
+  return (
+    <Meter
+      value={level}
+      minValue={0}
+      maxValue={100}
+      label="Battery"
+      color={level < 20 ? "danger" : "success"}
+    />
+  );
+}
+```
+
+<Note>
+  Use `Meter` for measurements (disk space, battery, signal strength) and `Progress` for tasks that have a start and an end (file upload, form steps). Screen readers announce them differently, so choosing the right component matters for accessibility.
+</Note>
