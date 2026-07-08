@@ -209,28 +209,27 @@ function Example() {
 
   return (
     <Slider
+      aria-label="Volume"
       value={volume}
       onChange={setVolume}
       minValue={0}
       maxValue={100}
       step={1}
-    >
-      Volume
-    </Slider>
+    />
   );
 }
 ```
 
 <Tip>
-  You can customise the track appearance by passing your own `SliderTrack`, `SliderFill`, and `SliderThumb` as children. When no children are provided, the default composed track is rendered automatically.
+  You can customise the track appearance by passing your own `SliderTrack`, `SliderFill`, and `SliderThumb` as children. When no children are provided, the default composed track (`SliderTrack` wrapping `SliderFill` and `SliderThumb`) is rendered automatically.
 </Tip>
 
 <ParamField body="value" type="number">
   The current numeric value of the slider.
 </ParamField>
 
-<ParamField body="onChange" type="(value: number) => void">
-  Called continuously as the user drags the thumb.
+<ParamField body="onChange" type="(value: number | number[]) => void">
+  Called continuously as the user drags the thumb. Receives a single `number` for a standard slider, or a `number[]` tuple when using a range slider (two thumbs).
 </ParamField>
 
 <ParamField body="minValue" type="number" default="0">
@@ -250,5 +249,5 @@ function Example() {
 </ParamField>
 
 <ParamField body="children" type="ReactNode">
-  Optional label. When you pass custom composition children (track/fill/thumb), they replace the default layout.
+  Custom track composition. When provided, replaces the default `SliderTrack` / `SliderFill` / `SliderThumb` layout entirely. Omit to use the built-in track.
 </ParamField>

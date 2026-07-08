@@ -68,7 +68,7 @@ function Example() {
 ```
 
 <Note>
-  The first column is automatically designated as the row header (`isRowHeader`) to satisfy ARIA grid requirements. Place your most descriptive column — typically a name or ID — first.
+  The first column is automatically designated as the row header (`isRowHeader`) to satisfy ARIA grid requirements. Place your most descriptive column — typically a name or ID — first. The table renders as a WAI-ARIA grid: each body cell carries `role="gridcell"`, which screen readers announce as part of the grid navigation.
 </Note>
 
 <ParamField body="columns" type="{ key: string; label: string }[]" required>
@@ -91,7 +91,7 @@ function Example() {
 
 ## Alert
 
-`<Alert>` displays a contextual message with an optional `title` and `description`. You can also pass `children` for custom body content below the description. It wraps HeroUI v3's `AlertContent`, `AlertTitle`, and `AlertDescription` behind a flat props API.
+`<Alert>` displays a contextual message with an optional `title` and `description`. You can also pass `children` for custom body content below the description. It provides a flat props API so you never need to manage the internal sub-parts yourself.
 
 ```tsx
 import { Alert } from "@lindaui/ui/alert";

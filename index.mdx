@@ -36,7 +36,7 @@ Linda UI is a React 19 design system built on top of HeroUI v3 and react-aria-co
     Pull in the OKLCH teal tokens, HeroUI defaults, and Tailwind v4 utilities by importing the CSS bundle once — typically in your root layout or global stylesheet.
 
     ```ts
-    import "@lindaui/tokens/styles.css";
+    import "@lindaui/tokens/css";
     ```
   </Step>
   <Step title="Use a component">
@@ -46,7 +46,7 @@ Linda UI is a React 19 design system built on top of HeroUI v3 and react-aria-co
     import { Button } from "@lindaui/ui";
 
     export default function App() {
-      return <Button color="primary">Get started</Button>;
+      return <Button variant="primary">Get started</Button>;
     }
     ```
   </Step>

@@ -13,7 +13,7 @@ Linda UI's date and time components are compound re-exports of HeroUI v3 (React 
   pnpm add @internationalized/date
   ```
 
-  Import helpers like `parseDate`, `parseAbsoluteToLocal`, and `CalendarDate` from this package when passing controlled values.
+  Import helpers like `parseDate`, `parseAbsoluteToLocal`, `CalendarDate`, and `Time` from this package when passing controlled values.
 </Note>
 
 ---
@@ -58,7 +58,7 @@ export function BirthDateField() {
 ```
 
 <Note>
-  `DateInput` is a compound component (`DateField` in HeroUI). For advanced composition (custom segments, description slots) refer to the HeroUI v3 `DateField` docs.
+  `DateInput` is a compound component. For advanced composition (custom segments, description slots) refer to the HeroUI v3 `DateField` docs.
 </Note>
 
 ---
@@ -135,17 +135,21 @@ import { DateRangePicker } from "@lindaui/ui/date-range-picker";
 
 ### Controlled
 
-The `value` prop expects a `RangeValue<CalendarDate>` object — an object with `start` and `end` keys.
+The `value` prop expects an object with `start` and `end` keys, both typed as `CalendarDate`.
 
 ```tsx
 "use client";
 import { useState } from "react";
 import { DateRangePicker } from "@lindaui/ui/date-range-picker";
 import { parseDate, type CalendarDate } from "@internationalized/date";
-import type { RangeValue } from "@react-types/shared";
+
+interface DateRange {
+  start: CalendarDate;
+  end: CalendarDate;
+}
 
 export function BookingRangePicker() {
-  const [range, setRange] = useState<RangeValue<CalendarDate>>({
+  const [range, setRange] = useState<DateRange>({
     start: parseDate("2024-06-01"),
     end: parseDate("2024-06-07"),
   });
@@ -256,7 +260,7 @@ export function BookingCalendar() {
 
 ```tsx
 import { Calendar } from "@lindaui/ui/calendar";
-import { parseDate, isWeekend, getLocalTimeZone } from "@internationalized/date";
+import { isWeekend, getLocalTimeZone } from "@internationalized/date";
 
 <Calendar
   aria-label="Appointment date"
@@ -295,10 +299,14 @@ import { RangeCalendar } from "@lindaui/ui/range-calendar";
 import { useState } from "react";
 import { RangeCalendar } from "@lindaui/ui/range-calendar";
 import { parseDate, type CalendarDate } from "@internationalized/date";
-import type { RangeValue } from "@react-types/shared";
+
+interface DateRange {
+  start: CalendarDate;
+  end: CalendarDate;
+}
 
 export function HolidayRangeCalendar() {
-  const [range, setRange] = useState<RangeValue<CalendarDate>>({
+  const [range, setRange] = useState<DateRange>({
     start: parseDate("2024-08-05"),
     end: parseDate("2024-08-12"),
   });

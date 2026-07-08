@@ -58,28 +58,47 @@ You can pass an options object to customise the toast:
 "use client";
 import { toast } from "@lindaui/ui/toast";
 
-// Success toast with a title and description
-toast("Profile updated", {
+// Success toast with a description
+toast.success("Profile updated", {
   description: "Your changes have been saved to the server.",
 });
 
-// Error variant
-toast("Something went wrong", {
-  color: "danger",
-});
+// Danger variant using a helper method
+toast.danger("Something went wrong");
+```
+
+The `toast` function also exposes convenience methods for each variant: `toast.success()`, `toast.warning()`, `toast.danger()`, and `toast.info()`. These are equivalent to calling `toast()` with the corresponding `variant` option.
+
+### Promise-based toasts
+
+Use `toast.promise()` to automatically show loading, success, and error states while an async operation runs.
+
+```tsx
+"use client";
+import { toast } from "@lindaui/ui/toast";
+
+async function handleUpload(file: File) {
+  toast.promise(uploadFile(file), {
+    loading: "Uploading…",
+    success: "File uploaded successfully.",
+    error: "Upload failed. Please try again.",
+  });
+}
 ```
 
 ### Using the queue directly
 
-`toastQueue` exposes the underlying queue instance when you need lower-level control, such as closing a specific toast programmatically.
+`toastQueue` exposes the underlying queue instance when you need lower-level control, such as dismissing all toasts programmatically.
 
 ```tsx
 "use client";
 import { toast, toastQueue } from "@lindaui/ui/toast";
 
-const key = toast("Uploading…", { timeout: Infinity });
+// Dismiss every visible toast at once
+toast.clear();
 
-// Later — dismiss when the upload finishes
+// Or close a specific toast by its key
+const key = toast("Uploading…", { timeout: Infinity });
 toastQueue.close(key);
 ```
 
@@ -106,7 +125,7 @@ import { Spinner } from "@lindaui/ui/spinner";
 <Spinner color="primary" />
 ```
 
-All [HeroUI `SpinnerProps`](https://heroui.com) are forwarded directly, so you can pass `size`, `color`, `label`, `classNames`, and any other supported prop.
+All HeroUI `SpinnerProps` are forwarded directly, so you can pass `size`, `color`, `label`, `classNames`, and any other supported prop.
 
 <CodeGroup>
 ```tsx Inside a button
@@ -173,7 +192,7 @@ All HeroUI `SkeletonProps` are accepted and forwarded.
 
 ## Progress
 
-`Progress` (re-exported as `ProgressBar` from HeroUI v3) renders a linear progress bar. Use it to show determinate progress for tasks with a known completion percentage, or set `isIndeterminate` for ongoing activity.
+`Progress` renders a linear progress bar. Use it to show determinate progress for tasks with a known completion percentage, or set `isIndeterminate` for ongoing activity.
 
 ```tsx
 import { Progress } from "@lindaui/ui/progress";

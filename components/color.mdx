@@ -4,24 +4,51 @@ sidebarTitle: "Color"
 description: "Build accessible color pickers and palette selectors with Linda UI's color area, sliders, fields, swatches, and swatch pickers."
 ---
 
-Linda UI's color components are compound re-exports of HeroUI v3, built on React Aria Components for full keyboard and screen-reader accessibility. You can use them individually to build a custom color picker UI, or reach for the all-in-one `ColorPicker` when you need a complete solution out of the box. All components work with HeroUI's `Color` type from `@heroui/react`.
+Linda UI's color components are compound re-exports of HeroUI v3, built on React Aria Components for full keyboard and screen-reader accessibility. You can use them individually to assemble a custom color picker UI, or combine them inside a `ColorPicker` wrapper for a complete popover-driven solution. All components work with the `Color` type and `parseColor` helper, both importable from `@heroui/react`.
 
 ---
 
 ## ColorPicker
 
-`ColorPicker` is the all-in-one color selection component. It combines a color area, hue and opacity sliders, and a hex/hsl input into a single popover-driven picker. Use it when you want a full-featured color picker without assembling individual primitives.
+`ColorPicker` is the all-in-one color selection component. It is a **compound component** — you compose its `ColorPicker.Trigger` and `ColorPicker.Popover` sub-components to control what appears in the trigger button and what renders inside the popover. Use it when you want a full-featured color picker without assembling individual primitives from scratch.
 
 ```tsx
 import { ColorPicker } from "@lindaui/ui/color-picker";
+import { ColorArea } from "@lindaui/ui/color-area";
+import { ColorSlider } from "@lindaui/ui/color-slider";
+import { ColorSwatch } from "@lindaui/ui/color-swatch";
 ```
 
 ### Basic usage
 
 ```tsx
 import { ColorPicker } from "@lindaui/ui/color-picker";
+import { ColorArea } from "@lindaui/ui/color-area";
+import { ColorSlider } from "@lindaui/ui/color-slider";
+import { ColorSwatch } from "@lindaui/ui/color-swatch";
+import { Label } from "@heroui/react";
 
-<ColorPicker defaultValue="#6200ea" />
+<ColorPicker defaultValue="#6200ea">
+  <ColorPicker.Trigger>
+    <ColorSwatch size="lg" />
+    <Label>Pick a color</Label>
+  </ColorPicker.Trigger>
+  <ColorPicker.Popover>
+    <ColorArea
+      aria-label="Color area"
+      colorSpace="hsb"
+      xChannel="saturation"
+      yChannel="brightness"
+    >
+      <ColorArea.Thumb />
+    </ColorArea>
+    <ColorSlider channel="hue" colorSpace="hsb">
+      <ColorSlider.Track>
+        <ColorSlider.Thumb />
+      </ColorSlider.Track>
+    </ColorSlider>
+  </ColorPicker.Popover>
+</ColorPicker>
 ```
 
 ### Controlled
@@ -30,16 +57,41 @@ import { ColorPicker } from "@lindaui/ui/color-picker";
 "use client";
 import { useState } from "react";
 import { ColorPicker } from "@lindaui/ui/color-picker";
-import { parseColor, type Color } from "@heroui/react";
+import { ColorArea } from "@lindaui/ui/color-area";
+import { ColorSlider } from "@lindaui/ui/color-slider";
+import { ColorSwatch } from "@lindaui/ui/color-swatch";
+import { Label, parseColor, type Color } from "@heroui/react";
 
 export function BrandColorPicker() {
   const [color, setColor] = useState<Color>(parseColor("#6200ea"));
 
   return (
-    <ColorPicker
-      value={color}
-      onChange={setColor}
-    />
+    <div className="flex flex-col gap-2">
+      <ColorPicker value={color} onChange={setColor}>
+        <ColorPicker.Trigger>
+          <ColorSwatch size="lg" />
+          <Label>Brand color</Label>
+        </ColorPicker.Trigger>
+        <ColorPicker.Popover>
+          <ColorArea
+            aria-label="Color area"
+            colorSpace="hsb"
+            xChannel="saturation"
+            yChannel="brightness"
+          >
+            <ColorArea.Thumb />
+          </ColorArea>
+          <ColorSlider channel="hue" colorSpace="hsb">
+            <ColorSlider.Track>
+              <ColorSlider.Thumb />
+            </ColorSlider.Track>
+          </ColorSlider>
+        </ColorPicker.Popover>
+      </ColorPicker>
+      <p className="text-sm text-muted">
+        Selected: <span className="font-medium">{color.toString("hex")}</span>
+      </p>
+    </div>
   );
 }
 ```
@@ -52,7 +104,7 @@ export function BrandColorPicker() {
 
 ## ColorArea
 
-`ColorArea` renders a 2-D gradient canvas where dragging the thumb adjusts two color channels simultaneously — typically saturation on the x-axis and brightness on the y-axis. It is the central interactive element of a custom color picker.
+`ColorArea` renders a 2-D gradient canvas where dragging the thumb adjusts two color channels simultaneously — typically saturation on the x-axis and brightness on the y-axis. It must contain a `<ColorArea.Thumb />` child to function correctly. It is the central interactive element of a custom color picker.
 
 ```tsx
 import { ColorArea } from "@lindaui/ui/color-area";
@@ -62,9 +114,10 @@ import { ColorArea } from "@lindaui/ui/color-area";
 
 ```tsx
 import { ColorArea } from "@lindaui/ui/color-area";
-import { parseColor } from "@heroui/react";
 
-<ColorArea defaultValue={parseColor("hsl(0, 100%, 50%)")} />
+<ColorArea defaultValue="hsl(0, 100%, 50%)">
+  <ColorArea.Thumb />
+</ColorArea>
 ```
 
 ### Controlled with explicit channels
@@ -84,9 +137,12 @@ export function SaturationBrightnessArea() {
     <ColorArea
       value={color}
       onChange={setColor}
+      colorSpace="hsb"
       xChannel="saturation"
       yChannel="brightness"
-    />
+    >
+      <ColorArea.Thumb />
+    </ColorArea>
   );
 }
 ```
@@ -99,11 +155,15 @@ export function SaturationBrightnessArea() {
   The color channel controlled by vertical movement (e.g. `"brightness"`, `"blue"`).
 </ParamField>
 
+<ParamField body="colorSpace" type="string">
+  The color space to operate in. Common values: `"hsb"`, `"hsl"`, `"rgb"`.
+</ParamField>
+
 ---
 
 ## ColorSlider
 
-`ColorSlider` is a single-axis slider that controls one color channel — typically hue, saturation, lightness, or opacity. Stack multiple `ColorSlider` components beneath a `ColorArea` to form a fully custom picker.
+`ColorSlider` is a single-axis slider that controls one color channel — typically hue, saturation, lightness, or opacity. It is composed using `ColorSlider.Track` and `ColorSlider.Thumb` sub-components. Stack multiple `ColorSlider` instances beneath a `ColorArea` to form a fully custom picker.
 
 ```tsx
 import { ColorSlider } from "@lindaui/ui/color-slider";
@@ -113,12 +173,14 @@ import { ColorSlider } from "@lindaui/ui/color-slider";
 
 ```tsx
 import { ColorSlider } from "@lindaui/ui/color-slider";
-import { parseColor } from "@heroui/react";
+import { Label } from "@heroui/react";
 
-<ColorSlider
-  channel="hue"
-  defaultValue={parseColor("hsl(220, 80%, 60%)")}
-/>
+<ColorSlider channel="hue" defaultValue="hsl(220, 80%, 60%)">
+  <Label>Hue</Label>
+  <ColorSlider.Track>
+    <ColorSlider.Thumb />
+  </ColorSlider.Track>
+</ColorSlider>
 ```
 
 ### Composing a custom picker with ColorArea + ColorSliders
@@ -132,27 +194,40 @@ import { parseColor, type Color } from "@heroui/react";
 
 export function CustomColorPicker() {
   const [color, setColor] = useState<Color>(
-    parseColor("hsl(220, 80%, 60%)")
+    parseColor("hsb(220, 80%, 90%)")
   );
 
   return (
-    <div className="flex flex-col gap-3">
+    <div className="flex flex-col gap-3 w-64">
       <ColorArea
         value={color}
         onChange={setColor}
+        colorSpace="hsb"
         xChannel="saturation"
-        yChannel="lightness"
-      />
+        yChannel="brightness"
+      >
+        <ColorArea.Thumb />
+      </ColorArea>
       <ColorSlider
         channel="hue"
+        colorSpace="hsb"
         value={color}
         onChange={setColor}
-      />
+      >
+        <ColorSlider.Track>
+          <ColorSlider.Thumb />
+        </ColorSlider.Track>
+      </ColorSlider>
       <ColorSlider
         channel="alpha"
+        colorSpace="hsb"
         value={color}
         onChange={setColor}
-      />
+      >
+        <ColorSlider.Track>
+          <ColorSlider.Thumb />
+        </ColorSlider.Track>
+      </ColorSlider>
     </div>
   );
 }
@@ -162,11 +237,15 @@ export function CustomColorPicker() {
   The color channel this slider controls. Common values: `"hue"`, `"saturation"`, `"lightness"`, `"brightness"`, `"red"`, `"green"`, `"blue"`, `"alpha"`.
 </ParamField>
 
+<ParamField body="colorSpace" type="string">
+  The color space this slider operates in. Should match the space used by the sibling `ColorArea`.
+</ParamField>
+
 ---
 
 ## ColorField
 
-`ColorField` is a plain text input that accepts color values in hex, HSL, or RGB notation. Use it alongside visual pickers so users can paste or type exact values.
+`ColorField` is a plain text input that accepts color values in hex, HSL, or RGB notation. Use it alongside visual pickers so users can paste or type exact values. It is a compound component — wrap the input in `ColorField.Group` and add `ColorField.Input` as its child.
 
 ```tsx
 import { ColorField } from "@lindaui/ui/color-field";
@@ -176,8 +255,14 @@ import { ColorField } from "@lindaui/ui/color-field";
 
 ```tsx
 import { ColorField } from "@lindaui/ui/color-field";
+import { Label } from "@heroui/react";
 
-<ColorField label="Hex color" defaultValue="#6200ea" />
+<ColorField defaultValue="#6200ea">
+  <Label>Hex color</Label>
+  <ColorField.Group>
+    <ColorField.Input />
+  </ColorField.Group>
+</ColorField>
 ```
 
 ### Controlled
@@ -186,17 +271,18 @@ import { ColorField } from "@lindaui/ui/color-field";
 "use client";
 import { useState } from "react";
 import { ColorField } from "@lindaui/ui/color-field";
-import { parseColor, type Color } from "@heroui/react";
+import { Label, parseColor, type Color } from "@heroui/react";
 
 export function HexInput() {
   const [color, setColor] = useState<Color>(parseColor("#6200ea"));
 
   return (
-    <ColorField
-      label="Hex value"
-      value={color}
-      onChange={setColor}
-    />
+    <ColorField value={color} onChange={setColor}>
+      <Label>Hex value</Label>
+      <ColorField.Group>
+        <ColorField.Input />
+      </ColorField.Group>
+    </ColorField>
   );
 }
 ```
@@ -209,11 +295,11 @@ import { useState } from "react";
 import { ColorArea } from "@lindaui/ui/color-area";
 import { ColorSlider } from "@lindaui/ui/color-slider";
 import { ColorField } from "@lindaui/ui/color-field";
-import { parseColor, type Color } from "@heroui/react";
+import { Label, parseColor, type Color } from "@heroui/react";
 
 export function FullColorPicker() {
   const [color, setColor] = useState<Color>(
-    parseColor("hsl(220, 80%, 60%)")
+    parseColor("hsb(220, 80%, 90%)")
   );
 
   return (
@@ -221,12 +307,28 @@ export function FullColorPicker() {
       <ColorArea
         value={color}
         onChange={setColor}
+        colorSpace="hsb"
         xChannel="saturation"
-        yChannel="lightness"
-      />
-      <ColorSlider channel="hue" value={color} onChange={setColor} />
-      <ColorSlider channel="alpha" value={color} onChange={setColor} />
-      <ColorField label="Hex" value={color} onChange={setColor} />
+        yChannel="brightness"
+      >
+        <ColorArea.Thumb />
+      </ColorArea>
+      <ColorSlider channel="hue" colorSpace="hsb" value={color} onChange={setColor}>
+        <ColorSlider.Track>
+          <ColorSlider.Thumb />
+        </ColorSlider.Track>
+      </ColorSlider>
+      <ColorSlider channel="alpha" colorSpace="hsb" value={color} onChange={setColor}>
+        <ColorSlider.Track>
+          <ColorSlider.Thumb />
+        </ColorSlider.Track>
+      </ColorSlider>
+      <ColorField value={color} onChange={setColor}>
+        <Label>Hex</Label>
+        <ColorField.Group>
+          <ColorField.Input />
+        </ColorField.Group>
+      </ColorField>
     </div>
   );
 }
@@ -255,9 +357,11 @@ import { ColorSwatch } from "@lindaui/ui/color-swatch";
 ```tsx
 "use client";
 import { useState } from "react";
-import { ColorPicker } from "@lindaui/ui/color-picker";
 import { ColorSwatch } from "@lindaui/ui/color-swatch";
-import { parseColor, type Color } from "@heroui/react";
+import { ColorPicker } from "@lindaui/ui/color-picker";
+import { ColorArea } from "@lindaui/ui/color-area";
+import { ColorSlider } from "@lindaui/ui/color-slider";
+import { Label, parseColor, type Color } from "@heroui/react";
 
 export function ColorPreview() {
   const [color, setColor] = useState<Color>(parseColor("#6200ea"));
@@ -268,7 +372,26 @@ export function ColorPreview() {
         color={color.toString("hex")}
         aria-label="Selected color"
       />
-      <ColorPicker value={color} onChange={setColor} />
+      <ColorPicker value={color} onChange={setColor}>
+        <ColorPicker.Trigger>
+          <Label>Change color</Label>
+        </ColorPicker.Trigger>
+        <ColorPicker.Popover>
+          <ColorArea
+            aria-label="Color area"
+            colorSpace="hsb"
+            xChannel="saturation"
+            yChannel="brightness"
+          >
+            <ColorArea.Thumb />
+          </ColorArea>
+          <ColorSlider channel="hue" colorSpace="hsb">
+            <ColorSlider.Track>
+              <ColorSlider.Thumb />
+            </ColorSlider.Track>
+          </ColorSlider>
+        </ColorPicker.Popover>
+      </ColorPicker>
     </div>
   );
 }
@@ -278,7 +401,7 @@ export function ColorPreview() {
 
 ## ColorSwatchPicker
 
-`ColorSwatchPicker` renders a grid of `ColorSwatch` items as a selectable palette. It is ideal for brand color palettes, theme pickers, or any situation where you want to constrain users to a predefined set of colors.
+`ColorSwatchPicker` renders a grid of color swatches as a selectable palette. It is ideal for brand color palettes, theme pickers, or any situation where you want to constrain users to a predefined set of colors. Use the `ColorSwatchPicker.Item`, `ColorSwatchPicker.Swatch`, and `ColorSwatchPicker.Indicator` dot-notation sub-components to compose each item.
 
 ```tsx
 import { ColorSwatchPicker } from "@lindaui/ui/color-swatch-picker";
@@ -287,13 +410,17 @@ import { ColorSwatchPicker } from "@lindaui/ui/color-swatch-picker";
 ### Basic usage
 
 ```tsx
-import { ColorSwatchPicker, ColorSwatchPickerItem } from "@lindaui/ui/color-swatch-picker";
+import { ColorSwatchPicker } from "@lindaui/ui/color-swatch-picker";
+
+const palette = ["#6200ea", "#0070f3", "#00c853", "#f50057", "#ff6d00"];
 
 <ColorSwatchPicker aria-label="Brand palette">
-  <ColorSwatchPickerItem color="#6200ea" aria-label="Purple" />
-  <ColorSwatchPickerItem color="#0070f3" aria-label="Blue" />
-  <ColorSwatchPickerItem color="#00c853" aria-label="Green" />
-  <ColorSwatchPickerItem color="#f50057" aria-label="Pink" />
+  {palette.map((hex) => (
+    <ColorSwatchPicker.Item key={hex} color={hex}>
+      <ColorSwatchPicker.Swatch />
+      <ColorSwatchPicker.Indicator />
+    </ColorSwatchPicker.Item>
+  ))}
 </ColorSwatchPicker>
 ```
 
@@ -302,10 +429,7 @@ import { ColorSwatchPicker, ColorSwatchPickerItem } from "@lindaui/ui/color-swat
 ```tsx
 "use client";
 import { useState } from "react";
-import {
-  ColorSwatchPicker,
-  ColorSwatchPickerItem,
-} from "@lindaui/ui/color-swatch-picker";
+import { ColorSwatchPicker } from "@lindaui/ui/color-swatch-picker";
 import { parseColor, type Color } from "@heroui/react";
 
 const palette = [
@@ -320,21 +444,29 @@ export function BrandPalettePicker() {
   const [color, setColor] = useState<Color>(parseColor("#0070f3"));
 
   return (
-    <ColorSwatchPicker
-      aria-label="Brand palette"
-      value={color}
-      onChange={setColor}
-    >
-      {palette.map(({ hex, label }) => (
-        <ColorSwatchPickerItem key={hex} color={hex} aria-label={label} />
-      ))}
-    </ColorSwatchPicker>
+    <div className="flex flex-col gap-3">
+      <ColorSwatchPicker
+        aria-label="Brand palette"
+        value={color}
+        onChange={setColor}
+      >
+        {palette.map(({ hex, label }) => (
+          <ColorSwatchPicker.Item key={hex} color={hex} aria-label={label}>
+            <ColorSwatchPicker.Swatch />
+            <ColorSwatchPicker.Indicator />
+          </ColorSwatchPicker.Item>
+        ))}
+      </ColorSwatchPicker>
+      <p className="text-sm text-muted">
+        Selected: <span className="font-medium">{color.toString("hex")}</span>
+      </p>
+    </div>
   );
 }
 ```
 
 <Note>
-  `ColorSwatchPicker` is a compound component — you compose it with `ColorSwatchPickerItem` children. Both are exported from `@lindaui/ui/color-swatch-picker`.
+  `ColorSwatchPicker` uses dot-notation sub-components — compose it with `ColorSwatchPicker.Item`, `ColorSwatchPicker.Swatch`, and `ColorSwatchPicker.Indicator`. All are accessible from the single `@lindaui/ui/color-swatch-picker` import.
 </Note>
 
 <Tip>

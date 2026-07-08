@@ -1,13 +1,13 @@
 ---
-title: "Select and Combobox Components"
+title: "Select and ComboBox Components"
 sidebarTitle: "Selects"
-description: "Use Linda UI's Select and Combobox components to build accessible dropdowns and typeahead pickers with a simple flat items array and onChange API."
+description: "Use Linda UI's Select and ComboBox components to build accessible dropdowns and typeahead pickers with a simple flat items array and onChange API."
 ---
 
-Linda UI's `Select` and `Combobox` components give you accessible dropdown and typeahead pickers behind a clean, flat API. Both accept a plain `items` array and fire `onChange` with a string value — the underlying React Aria composition (selected keys, popovers, list boxes) is fully encapsulated and never leaks into your code.
+Linda UI's `Select` and `ComboBox` components give you accessible dropdown and typeahead pickers behind a clean, flat API. Both accept a plain `items` array and fire `onChange` with a string value — the underlying React Aria composition (selected keys, popovers, list boxes) is fully encapsulated and never leaks into your code.
 
 <Warning>
-  There is **no `SelectItem` component** in Linda UI. Do not try to import or render `<SelectItem>`. Pass your options as a flat `items={[{ value, label }]}` array directly on `<Select>` or `<Combobox>`.
+  There is **no `SelectItem` component** in Linda UI. Do not try to import or render `<SelectItem>`. Pass your options as a flat `items={[{ value, label }]}` array directly on `<Select>` or `<ComboBox>`.
 </Warning>
 
 ---
@@ -159,19 +159,19 @@ Every `Select` must have an accessible name. You have two options:
 
 ---
 
-## Combobox
+## ComboBox
 
-`Combobox` extends `Select` with typeahead filtering — the user can type in the trigger to narrow the list of options. It shares the same flat `items` array and `onChange(value: string)` API as `Select`, with one additional callback for tracking the raw text input.
+`ComboBox` extends `Select` with typeahead filtering — the user can type in the trigger to narrow the list of options. It shares the same flat `items` array and `onChange(value: string)` API as `Select`, with one additional callback for tracking the raw text input.
 
 ```tsx
-import { Combobox } from "@lindaui/ui/combobox";
+import { ComboBox } from "@lindaui/ui/combobox";
 ```
 
 ### Basic typeahead
 
 ```tsx
 import { useState } from "react";
-import { Combobox } from "@lindaui/ui/combobox";
+import { ComboBox } from "@lindaui/ui/combobox";
 
 const COUNTRIES = [
   { value: "ar", label: "Argentina" },
@@ -182,11 +182,11 @@ const COUNTRIES = [
   { value: "pe", label: "Peru" },
 ];
 
-export function CountryCombobox() {
+export function CountryComboBox() {
   const [country, setCountry] = useState("");
 
   return (
-    <Combobox
+    <ComboBox
       label="Country"
       placeholder="Start typing…"
       items={COUNTRIES}
@@ -203,7 +203,7 @@ When your items list is large, fetch filtered results from your API as the user 
 
 ```tsx
 import { useState } from "react";
-import { Combobox } from "@lindaui/ui/combobox";
+import { ComboBox } from "@lindaui/ui/combobox";
 
 export function UserSearch() {
   const [selectedId, setSelectedId] = useState("");
@@ -216,7 +216,7 @@ export function UserSearch() {
   }
 
   return (
-    <Combobox
+    <ComboBox
       label="Assign to"
       placeholder="Search team members…"
       items={results}
@@ -229,15 +229,15 @@ export function UserSearch() {
 ```
 
 <Tip>
-  For client-side filtering, use `matchesSearch` from `@lindaui/ui/search` to filter your items array before passing it to `Combobox`. It handles accent normalization and case insensitivity automatically: `items.filter(item => matchesSearch(item.label, inputValue))`.
+  For client-side filtering, use `matchesSearch` from `@lindaui/ui/search` to filter your items array before passing it to `ComboBox`. It handles accent normalization and case insensitivity automatically: `items.filter(item => matchesSearch(item.label, inputValue))`.
 </Tip>
 
 ### Accessibility
 
-The same `aria-label` / `aria-labelledby` rules that apply to `Select` apply here. A `Combobox` without a visible `label` must have an `aria-label`.
+The same `aria-label` / `aria-labelledby` rules that apply to `Select` apply here. A `ComboBox` without a visible `label` must have an `aria-label`.
 
 ```tsx
-<Combobox
+<ComboBox
   aria-label="Search and select a product"
   items={products}
   onChange={setProductId}

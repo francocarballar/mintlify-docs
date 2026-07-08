@@ -27,7 +27,7 @@ Linda UI provides a cohesive family of input primitives — all built on React A
 
 ## Input
 
-The `Input` component wraps React Aria's `TextField`, `Label`, and the underlying `<input>` element into a single flat API.
+The `Input` component provides a flat API that bundles a label, a text field, and all accessibility wiring into a single import.
 
 ```tsx
 import { Input } from "@lindaui/ui/input";
@@ -135,7 +135,7 @@ The same `--field-*` CSS custom properties that style `Input` apply here, so a s
 
 ## NumberInput
 
-`NumberInput` wraps React Aria's `NumberField` and provides increment/decrement controls alongside the raw number value.
+`NumberInput` provides increment/decrement stepper controls alongside the raw number value, with built-in formatting support via `Intl.NumberFormat`.
 
 ```tsx
 import { NumberInput } from "@lindaui/ui/number-input";

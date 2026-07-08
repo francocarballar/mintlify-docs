@@ -1,5 +1,5 @@
 ---
-title: "Chart Blocks: Area, Bar, Line, Pie, and More"
+title: "Chart Blocks: Area, Bar, Line, Pie, Radar, and More"
 sidebarTitle: "Charts"
 description: "Drop-in chart blocks built on Recharts and @lindaui/ui/chart—area, bar, line, pie, radar, radial, stat cards, and chart card wrappers."
 ---
@@ -28,9 +28,10 @@ Every chart block (except dashboard components) accepts the same core props:
   category.
 </ParamField>
 
-<ParamField path="series" type="string[]" required>
+<ParamField path="series" type="string[]">
   The keys in each data object to render as series. Each key must have an
-  entry in `config`.
+  entry in `config`. **Not used by `PieChart`**, which replaces `series` with
+  `valueKey` (one numeric value per slice).
 </ParamField>
 
 <ParamField path="variant" type="string">

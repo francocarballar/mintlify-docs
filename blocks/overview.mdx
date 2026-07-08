@@ -1,7 +1,7 @@
 ---
-title: "Linda UI Blocks: Composable UI Sections Overview"
+title: "Linda UI Blocks: Composable UI Sections at a Glance"
 sidebarTitle: "Overview"
-description: "High-level, pre-wired UI sections built on @lindaui/ui primitives—auth forms, lists, charts, dialogs, and more."
+description: "Composable, production-ready UI sections built on @lindaui/ui primitives—auth flows, filterable lists, chart dashboards, and document viewers."
 ---
 
 Blocks are composable UI sections that sit one layer above the primitive components in `@lindaui/ui`. While primitives give you buttons, inputs, and cards, blocks wire those primitives into fully-formed, production-ready patterns—login flows, filterable lists, chart dashboards, and document viewers—with controlled APIs that leave all state and data-fetching in your application.
@@ -10,7 +10,7 @@ Blocks are composable UI sections that sit one layer above the primitive compone
 
 Install the blocks package alongside its required peer packages:
 
-```tsx
+```bash
 pnpm add @lindaui/blocks @lindaui/ui @lindaui/tokens
 ```
 
@@ -22,8 +22,8 @@ import "@lindaui/tokens/css";
 
 <Note>
   You must also provide the following peer dependencies in your project:
-  `lucide-react`, `react-hook-form >=7`, and `recharts >=3` (recharts is only
-  required when using chart blocks). React 19 or later is required.
+  `react >=19`, `react-dom >=19`, `react-hook-form >=7`, `lucide-react >=0.4`,
+  and `recharts >=3` (recharts is only required when using chart blocks).
 </Note>
 
 ## Import convention

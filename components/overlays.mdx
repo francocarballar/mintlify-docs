@@ -203,17 +203,17 @@ function Example() {
 
 ## Drawer
 
-`<Drawer>` is a panel that slides in from the edge of the viewport. Linda UI re-exports HeroUI v3's compound `Drawer` directly, so you compose it from its parts. Refer to the HeroUI v3 `Drawer` documentation for the full props surface.
+`<Drawer>` is a panel that slides in from the edge of the viewport. Linda UI re-exports the root `Drawer` component from HeroUI v3. The drawer's compound sub-parts (`DrawerTrigger`, `DrawerContent`, `DrawerHeader`, `DrawerBody`, `DrawerFooter`) are imported directly from `@heroui/react` alongside the root.
 
 ```tsx
+import { Drawer } from "@lindaui/ui/drawer";
 import {
-  Drawer,
   DrawerTrigger,
   DrawerContent,
   DrawerHeader,
   DrawerBody,
   DrawerFooter,
-} from "@lindaui/ui/drawer";
+} from "@heroui/react";
 import { Button } from "@lindaui/ui/button";
 
 function Example() {
@@ -238,7 +238,7 @@ function Example() {
 ```
 
 <Note>
-  `Drawer` is a compound re-export of HeroUI v3. Import all the parts you need from `@lindaui/ui/drawer` and compose them directly.
+  Linda UI re-exports the root `Drawer` component from `@lindaui/ui/drawer`. Compose it with the sub-parts (`DrawerTrigger`, `DrawerContent`, etc.) imported from `@heroui/react`. Refer to the HeroUI v3 `Drawer` documentation for the full props surface.
 </Note>
 
 ---
